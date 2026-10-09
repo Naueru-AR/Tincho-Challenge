@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="14 -2 104 104">
+  <!-- El mismo escudo de la barra superior (ver index.html). El texto usa tipografías del
+       sistema, porque un ícono no puede cargar las del sitio. -->
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7D774"/><stop offset="1" stop-color="#C8902E"/></linearGradient>
+  </defs>
+  <path transform="translate(22 2) scale(2.2)" d="M20 2 37 8v14c0 10-7 17-17 20C10 39 3 32 3 22V8z" fill="#141826" stroke="url(#g)" stroke-width="1.6"/>
+  <path d="M50 15h32v8H71v20H61V23H50z" fill="url(#g)"/>
+  <path d="M25 46h86l-5 22H20z" fill="url(#g)" stroke="#05060A" stroke-width="2"/>
+  <text x="66" y="64" text-anchor="middle" textLength="64" lengthAdjust="spacingAndGlyphs" font-family="'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', Impact, sans-serif" font-size="21" font-weight="800" font-style="italic" fill="#141826">TINCHO</text>
+  <path d="M35 71h64l-4 14H31z" fill="#141826" stroke="url(#g)" stroke-width="1.5"/>
+  <text x="65.5" y="81.6" text-anchor="middle" textLength="50" lengthAdjust="spacingAndGlyphs" font-family="'Barlow Condensed', 'Arial Narrow', 'Roboto Condensed', Impact, sans-serif" font-size="9.5" font-weight="700" fill="#F7D774">CHALLENGE</text>
+</svg>

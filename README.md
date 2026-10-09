@@ -277,6 +277,8 @@ Todo el estilo está en `public/styles.css`; los colores son variables en `:root
   adentro, en dos cintas cortas que apenas sobresalen (las primeras palabras en la
   dorada, la última en la de abajo). Sale del `title` de `participants.json` y se comprime solo si es largo.
   Lleva al inicio y, al pasar el mouse, se inclina, brilla y le cruza un destello.
+- **Ícono de la pestaña**: `public/favicon.svg`, el mismo escudo de la barra
+  superior. Si cambia el nombre del torneo, hay que editar el texto a mano ahí.
 - **Encabezado centrado**: título en itálica con el año "fantasma" detrás (solo
   contorno), fechas, cantidad de jugadores, cuenta regresiva y botón.
 - **Sol de rayos dorados** girando muy lento detrás del título (`.hero-rays`). Se

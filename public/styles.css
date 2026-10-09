@@ -83,6 +83,7 @@ code { font-size: .9em; color: var(--gold); }
   color: var(--ink); background: var(--panel-2); border: 1px solid var(--line-2);
   border-radius: 10px; padding: .55rem 1rem; cursor: pointer;
 }
+a.refresh { display: inline-block; text-decoration: none; }
 .refresh:hover { border-color: var(--gold-2); }
 .refresh[aria-busy="true"] { opacity: .6; cursor: progress; }
 
