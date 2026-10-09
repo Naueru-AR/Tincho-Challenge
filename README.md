@@ -59,8 +59,9 @@ Editá `public/participants.json`:
 ```
 
 - `alias` es el nombre que se muestra; `riotId` es el `Nombre#TAG` real.
-- `Kairo#SYS` (LAS) es una cuenta real cargada como ejemplo; los `Jugador1#LAS`…
-  `Jugador8#LAS` son de relleno y hay que reemplazarlos por los participantes.
+- Por ahora el único participante cargado es `Kairo#SYS` (LAS). Para sumar jugadores,
+  agregá una línea por cada uno en `players`. No uses Riot IDs inventados de relleno:
+  pueden coincidir con cuentas reales de otra gente.
 - `baseline` (opcional): las victorias/derrotas que tenía el jugador **el día que
   empezó el torneo**. Si lo cargás, el V–D y el winrate cuentan solo lo jugado
   durante el torneo. Si no, se muestra el total de la temporada.

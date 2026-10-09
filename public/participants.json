@@ -7,14 +7,6 @@
   "region": "americas",
   "opggRegion": "las",
   "players": [
-    { "alias": "Kairo", "riotId": "Kairo#SYS" },
-    { "alias": "Tomi", "riotId": "Jugador1#LAS" },
-    { "alias": "Nacho", "riotId": "Jugador2#LAS" },
-    { "alias": "Fede", "riotId": "Jugador3#LAS" },
-    { "alias": "Cami", "riotId": "Jugador4#LAS" },
-    { "alias": "Lucho", "riotId": "Jugador5#LAS" },
-    { "alias": "Juli", "riotId": "Jugador6#LAS" },
-    { "alias": "Mati", "riotId": "Jugador7#LAS" },
-    { "alias": "Santi", "riotId": "Jugador8#LAS" }
+    { "alias": "Kairo", "riotId": "Kairo#SYS" }
   ]
 }
