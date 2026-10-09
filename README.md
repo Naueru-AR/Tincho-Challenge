@@ -105,6 +105,13 @@ que contesta Riot:
   después, o se copió una vieja).
 - `riotStatus: 403` → la key venció (la de desarrollo dura 24 h).
 
+### Al cambiar de API key
+
+Riot cifra los PUUID con cada key: uno obtenido con una key da **400** si se usa con
+otra. Por eso la caché se guarda separada por key (`lib/riot.js`) y al cambiarla no
+hay que hacer nada más. Lo único que se pierde son los LP por partida ya guardados
+en KV, porque quedan asociados a los PUUID de la key anterior.
+
 ## Probarla en tu computadora
 
 Necesitás **Node.js** (trae `npm`). En Windows se instala con:
