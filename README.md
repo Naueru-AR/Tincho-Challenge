@@ -50,6 +50,7 @@ Editá `public/participants.json`:
   "region": "americas",     // europe para EUW, asia para KR
   "opggRegion": "las",
   "players": [
+    { "alias": "Kairo", "riotId": "Kairo#SYS" },
     { "alias": "Tomi", "riotId": "NombreEnJuego#TAG" },
     { "alias": "Nacho", "riotId": "Otro#LAS", "baseline": { "wins": 12, "losses": 9 } }
   ]
@@ -57,6 +58,8 @@ Editá `public/participants.json`:
 ```
 
 - `alias` es el nombre que se muestra; `riotId` es el `Nombre#TAG` real.
+- `Kairo#SYS` (LAS) es una cuenta real cargada como ejemplo; los `Jugador1#LAS`…
+  `Jugador8#LAS` son de relleno y hay que reemplazarlos por los participantes.
 - `baseline` (opcional): las victorias/derrotas que tenía el jugador **el día que
   empezó el torneo**. Si lo cargás, el V–D y el winrate cuentan solo lo jugado
   durante el torneo. Si no, se muestra el total de la temporada.

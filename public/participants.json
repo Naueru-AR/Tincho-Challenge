@@ -7,6 +7,7 @@
   "region": "americas",
   "opggRegion": "las",
   "players": [
+    { "alias": "Kairo", "riotId": "Kairo#SYS" },
     { "alias": "Tomi", "riotId": "Jugador1#LAS" },
     { "alias": "Nacho", "riotId": "Jugador2#LAS" },
     { "alias": "Fede", "riotId": "Jugador3#LAS" },
