@@ -89,10 +89,22 @@ Sin `RIOT_API_KEY`, o agregando `?demo` a la URL, la página muestra datos de ej
 
 ## Probarla en tu computadora
 
+Necesitás **Node.js** (trae `npm`). En Windows se instala con:
+
+```bash
+winget install --id OpenJS.NodeJS.LTS -e
+```
+
+Después de instalarlo abrí una terminal nueva, para que reconozca `node` y `npm`.
+El proyecto está probado con Node 24 LTS y wrangler 4.
+
 ```bash
 npm install
 npm run dev        # abre http://localhost:8788
 ```
+
+`npm install` baja `wrangler` (el servidor de prueba de Cloudflare) a `node_modules/`.
+Las versiones exactas quedan fijadas en `package-lock.json`, que sí va al repo.
 
 Así como está muestra los datos de ejemplo. Para ver datos reales, creá a mano un
 archivo `.dev.vars` en la raíz del proyecto con esta única línea:
@@ -123,6 +135,9 @@ git push
 
 La primera vez que hacés push desde una PC, Git abre una ventana para iniciar
 sesión en GitHub; después queda guardado.
+
+No se suben al repo (están en el `.gitignore`): `node_modules/`, `.wrangler/`,
+`.dev.vars` y `.claude/` (configuración local de Claude Code).
 
 ## Límites del plan gratis
 
