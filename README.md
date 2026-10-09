@@ -71,7 +71,8 @@ Editá `public/participants.json`:
 
 ## Publicarla gratis en Cloudflare Pages
 
-1. Subí esta carpeta a un repositorio de GitHub.
+1. El código ya está en GitHub: https://github.com/Naueru-AR/Tincho-Challenge
+   (ver [Repositorio](#repositorio)).
 2. En https://dash.cloudflare.com → **Workers & Pages** → **Create** → **Pages** →
    **Connect to Git** y elegí el repo.
 3. Configuración del build:
@@ -90,9 +91,38 @@ Sin `RIOT_API_KEY`, o agregando `?demo` a la URL, la página muestra datos de ej
 
 ```bash
 npm install
-echo 'RIOT_API_KEY=RGAPI-tu-key' > .dev.vars
 npm run dev        # abre http://localhost:8788
 ```
+
+Así como está muestra los datos de ejemplo. Para ver datos reales, creá a mano un
+archivo `.dev.vars` en la raíz del proyecto con esta única línea:
+
+```
+RIOT_API_KEY=RGAPI-tu-key
+```
+
+- `.dev.vars` **no viene con el proyecto** y está en el `.gitignore`: guarda tu key
+  y nunca se sube a GitHub. Cada uno crea el suyo.
+- Solo sirve para probar en local. El sitio publicado usa el secret `RIOT_API_KEY`
+  de Cloudflare.
+- En Windows crealo desde el editor y no con `echo ... > .dev.vars`: PowerShell
+  puede guardarlo en una codificación que wrangler no lee bien.
+
+## Repositorio
+
+El proyecto vive en https://github.com/Naueru-AR/Tincho-Challenge, rama `main`.
+La carpeta local ya está conectada a ese repositorio (`origin`).
+
+Para guardar y publicar un cambio:
+
+```bash
+git add -A
+git commit -m "Descripción del cambio"
+git push
+```
+
+La primera vez que hacés push desde una PC, Git abre una ventana para iniciar
+sesión en GitHub; después queda guardado.
 
 ## Límites del plan gratis
 
