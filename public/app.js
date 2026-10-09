@@ -180,13 +180,15 @@ function renderHeader(d) {
   document.title = d.title;
   const words = d.title.trim().split(/\s+/);
   const last = words.length > 1 ? words.pop() : "";
-  $("title").innerHTML = `<span>${esc(words.join(" "))}</span>${last ? `<span class="gold">${esc(last)}</span>` : ""}`;
+  $("title").innerHTML = `<span>${esc(words.join(" "))}</span>${last ? ` <span class="gold">${esc(last)}</span>` : ""}`;
   $("brand-name").textContent = d.title;
   $("foot-name").textContent = d.title;
   const year = new Date(d.start).getFullYear();
   $("brand-ed").textContent = d.edition || "";
   $("chip").textContent = d.edition ? `${d.edition} · ${year}` : String(year);
-  $("when").textContent = rangeText(d.start, d.end);
+  $("ghost").textContent = year;
+  $("when").textContent = `${rangeText(d.start, d.end)} de ${year}`;
+  $("meta").textContent = `${d.players.length} ${d.players.length === 1 ? "jugador" : "jugadores"} · SoloQ`;
   tick();
 }
 

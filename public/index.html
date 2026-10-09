@@ -8,7 +8,7 @@
   <meta name="description" content="Tabla en vivo del Tincho Challenge: rango, winrate e historial de SoloQ de cada participante.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -29,14 +29,16 @@
   </header>
 
   <section class="hero">
+    <div class="hero-rays" aria-hidden="true"></div>
     <div class="wrap hero-inner">
-      <div class="hero-copy">
-        <p class="chip" id="chip">Edición I · 2026</p>
-        <h1 id="title"><span>Tincho</span><span class="gold">Challenge</span></h1>
-        <p class="lead">El desafío de SoloQ entre amigos. Cada uno escala con su propia cuenta y la tabla se actualiza sola.</p>
-        <p class="when" id="when"></p>
-        <a class="btn-primary" href="#tabla">Ver la tabla</a>
+      <p class="chip" id="chip">Edición I · 2026</p>
+      <div class="title-wrap">
+        <span class="ghost" id="ghost" aria-hidden="true">2026</span>
+        <h1 id="title"><span>Tincho</span> <span class="gold">Challenge</span></h1>
       </div>
+      <p class="when" id="when"></p>
+      <p class="meta" id="meta"></p>
+      <p class="lead">El desafío de SoloQ entre amigos. Cada uno escala con su propia cuenta y la tabla se actualiza sola.</p>
       <div class="countdown" aria-live="off">
         <p class="cd-label" id="cd-label">El torneo termina en</p>
         <div class="cd-boxes" id="cd-boxes">
@@ -46,6 +48,7 @@
           <div><b id="cd-s">--</b><span>seg</span></div>
         </div>
       </div>
+      <a class="btn-primary" href="#tabla">Ver la tabla</a>
     </div>
   </section>
 

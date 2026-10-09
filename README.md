@@ -164,6 +164,19 @@ sesión en GitHub; después queda guardado.
 No se suben al repo (están en el `.gitignore`): `node_modules/`, `.wrangler/`,
 `.dev.vars` y `.claude/` (configuración local de Claude Code).
 
+## Diseño
+
+Todo el estilo está en `public/styles.css`; los colores son variables en `:root`.
+
+- **Encabezado centrado**: título en itálica con el año "fantasma" detrás (solo
+  contorno), fechas, cantidad de jugadores, cuenta regresiva y botón.
+- **Sol de rayos dorados** girando muy lento detrás del título (`.hero-rays`). Se
+  detiene si el sistema pide menos animaciones.
+- **Formas inclinadas**: las cajas de la cuenta regresiva, el botón y los títulos
+  comparten la misma inclinación (`--slant`).
+- **Colores**: fondo oscuro y dorado como base; el celeste (`--sky`) es el acento
+  secundario. El rojo queda solo para derrotas.
+
 ## Remakes
 
 Las partidas que terminan en remake (menos de 5 minutos o rendición temprana)
