@@ -184,6 +184,8 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
   panel del organizador y el botón Admin.
 - `backup-produccion-2026-10-09-c`: con el panel del organizador, antes de pasar la
   caché a KV (el panel fallaba con "Too many subrequests").
+- `backup-produccion-2026-10-09-d`: con la caché en KV y el panel revisando las
+  últimas 12 partidas, antes de los refuerzos para 20 jugadores.
 
 Para ver los backups y volver a uno:
 
@@ -450,9 +452,9 @@ Hay tres topes que condicionan cómo está hecho el sitio:
 
 | Tope | Cuánto | Cómo se respeta |
 |---|---|---|
-| Cloudflare: consultas por pedido | 50, contando cada `fetch` a Riot **y cada lectura o escritura de la Cache API** | La Cache API se usa una sola vez por pedido (para la respuesta entera); lo demás va a KV, que tiene su propio tope de 1.000 |
-| Riot (key personal) | 100 consultas cada 2 minutos | La tabla se recalcula como mucho cada 2 minutos; el panel descarga el historial de a 20 partidas, con pausas |
-| Cloudflare KV | 100.000 lecturas y 1.000 escrituras por día | Solo se guarda lo que dura: cuentas, íconos, partidas terminadas y los LP |
+| Cloudflare: consultas por pedido | 50, contando cada `fetch` a Riot **y cada lectura o escritura de la Cache API** | Cada pedido tiene un tope propio de 42 consultas a Riot; la Cache API se usa unas pocas veces por pedido y lo demás va a KV, que tiene un tope aparte de 1.000 |
+| Riot (key personal) | 20 consultas por segundo y 100 cada 2 minutos | Todas las consultas pasan por un regulador de 15 por segundo; la tabla se recalcula como mucho cada 2 minutos |
+| Cloudflare KV | 100.000 lecturas y 1.000 escrituras por día | Solo se guarda lo que dura: cuentas, íconos, partidas terminadas, los LP y la revisión del panel |
 
 Qué se guarda y cuánto dura:
 
@@ -463,15 +465,42 @@ Qué se guarda y cuánto dura:
 - **Rango y LP actuales**: no se guardan por separado; se piden a Riot en cada
   recálculo de la tabla (1 consulta por jugador).
 
-Con esto, recalcular la tabla cuesta 1 consulta a Riot por jugador (más 2 por
-jugador la primera vez, por la cuenta y el ícono), así que entra cómodo hasta unos
-**20 participantes**. La primera vez con muchos jugadores, algunos íconos pueden
-aparecer recién en la segunda actualización.
+Los vencimientos llevan un margen al azar (hasta 25 % más), para que no venza todo
+junto en la misma pasada.
+
+### Con 20 jugadores
+
+Recalcular la tabla cuesta 1 consulta a Riot por jugador: 20 de las 42 posibles.
+Lo que sobra se usa, por prioridad, en:
+
+1. Cuentas y rangos (imprescindible).
+2. Íconos que haya que renovar.
+3. En segundo plano y de a un jugador: los LP de la partida nueva y la revisión
+   del panel.
+
+Si las consultas no alcanzan (por ejemplo, muchos jugadores terminan una partida
+a la vez, o es el primer arranque), **nada se rompe**: lo que no entró queda para
+la pasada siguiente y se completa solo. Lo único que se demora es el dato de fondo
+(un ícono nuevo, los LP de esa partida, la revisión del panel); el rango siempre
+sale en la misma pasada.
+
+### Si Riot falla o frena las consultas
+
+- Si Riot responde "esperá" (429), se espera y se reintenta una vez.
+- Si igual no se puede consultar a un jugador, **la tabla lo muestra con su último
+  dato bueno** en lugar de un error, y esa respuesta no se guarda en caché, así la
+  próxima visita vuelve a intentarlo.
+
+### Cuotas diarias
 
 Cada partida que juega un participante cuesta 3 escrituras de KV (la partida, la
 foto de LP y la revisión del panel). Con 20 jugadores a 12 partidas por día serían
 720 de las 1.000 diarias: entra, pero sin mucho margen. Si un día se agotan, el
 sitio sigue funcionando, solo que sin guardar nada nuevo hasta el día siguiente.
+
+El techo práctico del plan gratis ronda los **25 participantes**. Para más, hay
+que pasar al plan pago de Cloudflare (sube el tope de 50 a 10.000 consultas por
+pedido) y pedirle a Riot una key con más cupo.
 
 ## Créditos
 
