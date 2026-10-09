@@ -27,6 +27,7 @@ public/               ← el sitio (HTML, CSS, JS) + participants.json
 functions/api/        ← endpoints que corren en Cloudflare (esconden la API key)
   leaderboard.js      GET /api/leaderboard
   player/[puuid].js   GET /api/player/:puuid
+  diag.js             GET /api/diag (revisa la API key sin mostrarla)
 lib/riot.js           cliente de Riot con caché
 lib/lp.js             LP por partida (fotos del rango en Cloudflare KV)
 lib/demo.js           datos de ejemplo
@@ -90,6 +91,18 @@ Editá `public/participants.json`:
 Cada vez que hagas push (por ejemplo, para cambiar participantes) se republica sola.
 
 Sin `RIOT_API_KEY`, o agregando `?demo` a la URL, la página muestra datos de ejemplo.
+
+### Si la tabla muestra "Riot respondió 401" o 403
+
+Abrí `https://TU-SITIO.pages.dev/api/diag`. No muestra la key, solo su forma y lo
+que contesta Riot:
+
+- `present: false` → la variable no existe en ese entorno (o falta redeployar).
+- `validFormat: false` → el valor guardado no es una key limpia. Tiene que medir 42
+  caracteres (`length`), empezar con `RGAPI-` y no tener espacios, comillas ni `=`.
+- `riotStatus: 401` con formato válido → Riot no reconoce esa key (se regeneró otra
+  después, o se copió una vieja).
+- `riotStatus: 403` → la key venció (la de desarrollo dura 24 h).
 
 ## Probarla en tu computadora
 
