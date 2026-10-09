@@ -28,7 +28,7 @@ OP.GG) y cada Riot ID enlaza a su perfil en OP.GG.
 public/               ← el sitio (HTML, CSS, JS) + participants.json
   index.html, app.js  página principal
   podio.html, podio.js  podio final por bracket
-  premios.html, premios.js  premios del torneo
+  reglas.html, reglas.js  reglas del torneo
   admin.html, admin.js  panel privado del organizador
   shared.js           lo que comparten las dos páginas
 functions/api/        ← endpoints que corren en Cloudflare (esconden la API key)
@@ -54,13 +54,12 @@ Editá `public/participants.json`:
 {
   "title": "Tincho Challenge",
   "edition": "Edición I",
-  "start": "2026-10-01T00:00:00-03:00",
-  "end":   "2026-11-01T00:00:00-03:00",
+  "start": "2026-10-15T00:00:00-03:00",
+  "end":   "2026-11-15T00:00:00-03:00",   // 31 días después de "start"
   "platform": "la2",        // LAS. LAN = la1, BR = br1, NA = na1, EUW = euw1
   "region": "americas",     // europe para EUW, asia para KR
   "opggRegion": "las",
   "players": [
-    { "alias": "Kairo", "riotId": "Kairo#SYS" },
     { "alias": "Tomi", "riotId": "NombreEnJuego#TAG" },
     { "alias": "Nacho", "riotId": "Otro#LAS", "baseline": { "wins": 12, "losses": 9 } }
   ]
@@ -68,9 +67,14 @@ Editá `public/participants.json`:
 ```
 
 - `alias` es el nombre que se muestra; `riotId` es el `Nombre#TAG` real.
-- Por ahora hay 6 cuentas cargadas de prueba (`Kairo#SYS` y cinco amigos, todas de
-  LAS). Para sumar jugadores, agregá una línea por cada uno en `players`. No uses Riot IDs inventados de relleno:
+- La lista `players` está **vacía** hasta que se confirmen los participantes. Con la
+  lista vacía el sitio funciona igual: la tabla dice "Los participantes se anuncian
+  pronto" y el Top 3 muestra los tres lugares como vacantes. Para sumar jugadores,
+  agregá una línea por cada uno. No uses Riot IDs inventados de relleno:
   pueden coincidir con cuentas reales de otra gente.
+- Al sacar a alguien de la lista, lo que el sitio tenía guardado de esa cuenta (LP
+  por partida, banco, alertas) se borra solo la próxima vez que se abre el panel
+  del organizador.
 - `baseline` (opcional): las victorias/derrotas que tenía el jugador **el día que
   empezó el torneo**. Si lo cargás, el V–D y el winrate cuentan solo lo jugado
   durante el torneo. Si no, se muestra el total de la temporada.
@@ -186,6 +190,9 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
   caché a KV (el panel fallaba con "Too many subrequests").
 - `backup-produccion-2026-10-09-d`: con la caché en KV y el panel revisando las
   últimas 12 partidas, antes de los refuerzos para 20 jugadores.
+- `backup-produccion-2026-10-09-e`: con el ícono de la pestaña, las seis cuentas de
+  prueba y la página de Premios, antes de pasar a Reglas, banco de partidas y
+  fechas reales.
 
 Para ver los backups y volver a uno:
 
@@ -251,23 +258,28 @@ winrate:
   las victorias y derrotas ("101V · 97D") y, debajo, una barra partida en dos: el
   tramo verde es proporcional a las victorias y el rojo a las derrotas.
 
-## Menú y premios
+## Menú y reglas
 
 La barra superior tiene el escudo (lleva al inicio) y tres opciones:
 
 - **Ranking**: baja directo a la tabla de posiciones.
 - **Podio**: abre `podio.html` (el podio final por bracket).
-- **Premios**: abre `premios.html`.
+- **Reglas**: abre `reglas.html`.
 
-Los premios se cargan a mano en `participants.json`. Mientras la lista esté vacía,
-la página dice que todavía no están anunciados:
+Las partidas por día y los días de cupo liberado que muestran las reglas salen de
+`dailyLimit` y `freeLastDays`, así que al cambiarlos en `participants.json` se
+actualizan solos en las reglas, en el historial y en el panel.
 
-```json
-"prizes": [
-  { "title": "1.º High Elo", "prize": "$50.000", "note": "Opcional: una aclaración" },
-  { "title": "1.º Low Elo", "prize": "$30.000" }
-]
-```
+Las reglas están escritas a mano en `public/reglas.html`, agrupadas por tema. Cada
+regla es un `<li>` con un título y un texto; para cambiarlas o sumar una se edita
+ese archivo:
+
+- `<li class="no">` con la etiqueta "Prohibido": sale en rojo.
+- `<li class="ok">` con la etiqueta "Permitido": sale en verde.
+- `<li>` sin clase: informativa, en dorado.
+
+Antes ahí había una página de Premios; el enlace viejo (`/premios`) redirige a las
+reglas (`public/_redirects`).
 
 ## Diseño
 
@@ -279,6 +291,11 @@ Todo el estilo está en `public/styles.css`; los colores son variables en `:root
   Lleva al inicio y, al pasar el mouse, se inclina, brilla y le cruza un destello.
 - **Ícono de la pestaña**: `public/favicon.svg`, el mismo escudo de la barra
   superior. Si cambia el nombre del torneo, hay que editar el texto a mano ahí.
+- **Cuenta regresiva automática**: antes del inicio cuenta hasta que arranca el
+  torneo; desde ese momento cuenta sola hasta que termina; y al terminar muestra
+  "Torneo terminado" y aparece el botón del podio final. En los últimos 3 días
+  (cupo liberado) suma debajo el cartel "Banco de partidas sin límite". Todo sale
+  de `start`, `end` y `freeLastDays`; no hay que tocar nada a mano.
 - **Encabezado centrado**: título en itálica con el año "fantasma" detrás (solo
   contorno), fechas, cantidad de jugadores, cuenta regresiva y botón.
 - **Sol de rayos dorados** girando muy lento detrás del título (`.hero-rays`). Se
@@ -290,31 +307,59 @@ Todo el estilo está en `public/styles.css`; los colores son variables en `:root
 - **Colores**: fondo oscuro y dorado como base; el celeste (`--sky`) es el acento
   secundario. El rojo queda solo para derrotas.
 
-## Límite de partidas por día
+## Banco de partidas
 
-El torneo tiene un tope de partidas por día, que se define en `participants.json`:
+No hay un tope fijo por día sino un **banco acumulable**. Cada día del torneo se
+suman 8 partidas de SoloQ al banco de cada jugador, y las que no juega quedan
+guardadas para los días siguientes. Si hoy juega 4, mañana tiene 12.
+
+**El torneo dura 31 días: 28 con banco y los últimos 3 con el cupo liberado**, en
+los que se puede jugar sin límite. Por eso el banco máximo es 28 × 8 = 224
+partidas.
+
+La duración sale de las fechas `start` y `end` de `participants.json`: `end`
+tiene que ser exactamente 31 días después de `start`. Esta edición empieza el
+**15 de octubre** a las 00:00 y termina el 15 de noviembre a las 00:00: el último
+día de juego es el 14 de noviembre y el cupo se libera el 12, 13 y 14.
+
+Lo que se haya jugado antes del 15 no cuenta: ni descuenta del banco ni genera
+alertas en el panel.
+
+Las dos cifras se definen en `participants.json`:
 
 ```json
-"dailyLimit": 12
+"dailyLimit": 8,
+"freeLastDays": 3
 ```
+
+La cuenta es: **banco de hoy = 8 × días de torneo transcurridos − partidas jugadas
+antes de hoy**. El primer día hay 8; un día sin jugar deja 16 para el siguiente.
+Si un jugador se pasa del banco, queda registrado en el panel del organizador.
 
 El historial de cada jugador es **solo del día de hoy**: se reinicia a la
 medianoche y no muestra partidas de días anteriores. Al abrirlo aparece una franja
 de resumen de todo el ancho y, debajo, la lista de las partidas de hoy:
 
-- **A la izquierda**: cuántas partidas jugó sobre el límite ("7 de 12") y si le
-  quedan, si llegó al límite o si lo superó. Si lo superó, el número y la barra de
-  12 tramos se ponen en rojo, con el cartel "Límite superado por N".
+- **A la izquierda**: cuántas partidas jugó hoy, cuánto tenía en el banco al
+  empezar el día y cuántas le quedan. Si lo agotó dice "Banco agotado"; si se
+  pasó, la franja se pone en rojo con el cartel "Banco superado por N". La barra
+  muestra qué parte del banco usó. En los últimos días del torneo, en lugar del
+  banco dice "Cupo liberado".
 - **A la derecha**: ganadas, perdidas, remakes y LP sumados de esas mismas
   partidas de hoy.
 
 Cómo se cuenta:
 
 - El día va de 00:00 a 23:59 en la zona horaria del torneo, que se toma de la
-  fecha `start` (`-03:00` es Argentina).
+  fecha `start` (`-03:00` es Argentina). El banco empieza a sumar el día de
+  `start` y deja de sumar cuando empiezan los días de cupo liberado.
 - Una partida cuenta para el día en que **empezó**.
-- Las **remakes no cuentan** como partidas jugadas ni para el límite; se listan y
-  se informan aparte.
+- Las **remakes no descuentan** del banco; se listan y se informan aparte.
+- Lo jugado **hoy** se le pregunta a Riot en el momento; lo jugado en **días
+  anteriores** sale de lo que el sitio fue guardando solo (`lib/duo.js`), así que
+  necesita el cron y el KV activos desde el inicio del torneo. Si el sitio se
+  activa con el torneo ya empezado, no conoce las partidas anteriores y el banco
+  va a figurar más grande de lo real.
 - Los LP del día suman solo las partidas que tienen LP registrados (ver "LP por
   partida").
 - Se muestran hasta 30 partidas por día.
@@ -330,7 +375,7 @@ guardando solo (ver "Cómo funciona"). Para cada jugador con alertas hay dos par
 
 - **Ahora**: las sospechas de dúo vigentes, calculadas sobre sus **últimas 12
   partidas**. Incluye las de nivel medio y alto.
-- **Histórico**: las sospechas **altas** y los días con el límite superado, cada
+- **Histórico**: las sospechas **altas** y los días en que se pasó del banco, cada
   una con la fecha y hora en que se detectó. Quedan guardadas aunque el jugador
   siga jugando y esas partidas salgan de las últimas 12.
 
@@ -353,9 +398,10 @@ Las reglas:
   el 9 % de las veces, 4 veces el 4 % y 5 veces el 1,7 %. Sigue siendo una
   **alerta para revisar, no una prueba**: en elo alto hay poca gente en cola y se
   repiten compañeros. (En Maestro o más, además, Riot no permite hacer cola en dúo.)
-- **Límite diario superado**: los días en que jugó más partidas que el límite, con
-  cuántas se pasó. Se cuenta partida por partida a medida que las juega, así que
-  no depende de la ventana de 12. (El historial público solo muestra hoy.)
+- **Banco de partidas superado**: los días en que el jugador llevaba jugadas más
+  partidas de las habilitadas hasta ese día, con cuántas se pasó. Se cuenta
+  partida por partida a medida que las juega, así que no depende de la ventana
+  de 12. En los últimos días, con el cupo liberado, ya no se registra.
 
 Las remakes no cuentan ni cortan una racha. Los umbrales se cambian en
 `participants.json`:
@@ -386,7 +432,8 @@ para que alcance aunque haya 20 jugadores:
    por jugador, si jugó algo nuevo. **Si no jugó, no se le consulta nada a Riot.**
 2. Si jugó, se trae solo la partida nueva (2 consultas) y se vuelve a analizar la
    ventana de sus últimas 12 partidas. Nunca se revisa el historial completo.
-3. Las sospechas altas y los días pasados del límite se anotan en el histórico.
+3. Las sospechas altas y los días en que se pasó del banco se anotan en el
+   histórico.
 
 Por cada pasada se gastan como mucho 12 consultas en esto; si muchos jugadores
 terminan una partida a la vez, a los que no les toca se los revisa en la pasada
@@ -496,8 +543,8 @@ sale en la misma pasada.
 ### Cuotas diarias
 
 Cada partida que juega un participante cuesta 3 escrituras de KV (la partida, la
-foto de LP y la revisión del panel). Con 20 jugadores a 12 partidas por día serían
-720 de las 1.000 diarias: entra, pero sin mucho margen. Si un día se agotan, el
+foto de LP y la revisión del panel). Con 20 jugadores a 8 partidas por día serían
+480 de las 1.000 diarias. Si un día se agotan, el
 sitio sigue funcionando, solo que sin guardar nada nuevo hasta el día siguiente.
 
 El techo práctico del plan gratis ronda los **25 participantes**. Para más, hay

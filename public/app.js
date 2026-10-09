@@ -32,7 +32,9 @@ function renderLadder(players) {
   const ranked = players.filter((p) => p.score >= 0);
   const unranked = players.length - ranked.length;
   if (!ranked.length) {
-    el.innerHTML = `<p class="unranked-note">Todavía nadie tiene rango en SoloQ. La escalera aparece cuando alguien termine sus partidas de posicionamiento.</p>`;
+    el.innerHTML = players.length
+      ? `<p class="unranked-note">Todavía nadie tiene rango en SoloQ. La escalera aparece cuando alguien termine sus partidas de posicionamiento.</p>`
+      : `<p class="unranked-note">La escalera aparece cuando estén cargados los participantes.</p>`;
     return;
   }
 
@@ -89,6 +91,10 @@ function renderTop3(players) {
 
 /* ---------- tabla ---------- */
 function renderBoard(players) {
+  if (!players.length) {
+    $("board").innerHTML = `<li class="history-msg">Los participantes se anuncian pronto.</li>`;
+    return;
+  }
   $("board").innerHTML = players.map((p, i) => {
     const games = p.wins + p.losses;
     const wr = games ? Math.round((p.wins / games) * 100) : null;
@@ -154,22 +160,38 @@ async function toggleHistory(row) {
 const signed = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : "0");
 
 // Franja de resumen arriba del historial, todo sobre el día de hoy: a la izquierda,
-// cuántas partidas jugó sobre el límite diario; a la derecha, cómo le fue.
+// cuántas partidas jugó y cuántas tenía en su banco; a la derecha, cómo le fue.
 function renderSummary(today, sum) {
-  const over = today ? today.played - today.limit : 0;
-  const flag = !today ? ""
-    : over > 0 ? `<span class="today-flag over">Límite superado por ${over}</span>`
-    : over === 0 ? `<span class="today-flag full">Llegó al límite</span>`
-    : `<span class="today-flag">Le quedan ${-over}</span>`;
+  if (!today) return sum ? `<div class="today"><div class="today-row"><span class="today-sum">${sum}</span></div></div>` : "";
+  const games = (n) => `<span class="today-count"><b>${n}</b> ${n === 1 ? "partida" : "partidas"}</span>`;
+  // Últimos días del torneo: el cupo está liberado y no hay banco que mostrar.
+  if (today.free) {
+    return `
+      <div class="today">
+        <div class="today-row">
+          <span class="today-title">Hoy</span>
+          ${games(today.played)}
+          <span class="today-flag free" title="En los últimos días del torneo se puede jugar sin límite.">Cupo liberado</span>
+          ${sum ? `<span class="today-sum">${sum}</span>` : ""}
+        </div>
+      </div>`;
+  }
+  // `bank` es lo que tenía disponible al empezar el día; `left`, lo que le queda ahora.
+  const { played, bank, left } = today;
+  const flag = left < 0 ? `<span class="today-flag over">Banco superado por ${-left}</span>`
+    : left === 0 ? `<span class="today-flag full">Banco agotado</span>`
+    : `<span class="today-flag">${left === 1 ? "Le queda 1" : `Le quedan ${left}`}</span>`;
+  const used = bank > 0 ? Math.min(100, Math.round((played / bank) * 100)) : played ? 100 : 0;
   return `
-    <div class="today${over > 0 ? " over" : ""}">
+    <div class="today${left < 0 ? " over" : ""}">
       <div class="today-row">
-        ${today ? `<span class="today-title">Hoy</span>
-        <span class="today-count"><b>${today.played}</b> de ${today.limit} partidas</span>${flag}` : ""}
+        <span class="today-title">Hoy</span>
+        ${games(played)}
+        <span class="today-count" title="Cada día suma ${today.limit} partidas; las que no se usan se acumulan.">Banco <b>${Math.max(bank, 0)}</b></span>
+        ${flag}
         ${sum ? `<span class="today-sum">${sum}</span>` : ""}
       </div>
-      ${today ? `<div class="today-meter" role="img" aria-label="${today.played} de ${today.limit} partidas jugadas hoy">${
-        Array.from({ length: today.limit }, (_, i) => `<i class="${i < today.played ? "on" : ""}"></i>`).join("")}</div>` : ""}
+      <div class="today-meter" role="img" aria-label="Jugó ${played} de las ${Math.max(bank, 0)} partidas que tenía en el banco"><i style="width:${used}%"></i></div>
     </div>`;
 }
 
@@ -214,14 +236,20 @@ function renderHeader(d) {
   $("chip").textContent = d.edition ? `${d.edition} · ${year}` : String(year);
   $("ghost").textContent = year;
   $("when").textContent = `${rangeText(d.start, d.end)} de ${year}`;
-  $("meta").textContent = `${d.players.length} ${d.players.length === 1 ? "jugador" : "jugadores"} · SoloQ`;
+  $("meta").textContent = d.players.length
+    ? `${d.players.length} ${d.players.length === 1 ? "jugador" : "jugadores"} · SoloQ`
+    : "Participantes a confirmar · SoloQ";
   tick();
 }
 
+// La cuenta regresiva cambia sola: antes del inicio cuenta hasta que arranca, durante el
+// torneo cuenta hasta que termina y, al terminar, muestra "Torneo terminado".
 function tick() {
   if (!lastData) return;
   const now = Date.now(), s = new Date(lastData.start).getTime(), e = new Date(lastData.end).getTime();
   const box = $("cd-boxes");
+  // En los últimos días del torneo el cupo de partidas está liberado: se avisa debajo.
+  $("cd-free").hidden = !(lastData.freeFrom && now >= new Date(lastData.freeFrom).getTime() && now < e);
   $("final-link").href = `podio.html${demoParam}`;
   $("final-link").hidden = now < e; // el podio final aparece cuando termina el torneo
   if (now >= e) {

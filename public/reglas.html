@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#05060A">
+  <title>Reglas · Tincho Challenge</title>
+  <meta name="description" content="Reglas del Tincho Challenge: torneo de SoloQ, qué está prohibido y qué está permitido.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip" href="#reglas">Saltar a las reglas</a>
+
+  <header class="bar">
+    <div class="wrap bar-inner">
+      <a class="brand" id="brand" href="/" aria-label="Tincho Challenge: inicio">
+        <svg class="crest" viewBox="14 0 104 100" aria-hidden="true">
+          <defs>
+            <linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7D774"/><stop offset="1" stop-color="#C8902E"/></linearGradient>
+            <clipPath id="ribbon-clip"><path d="M25 46h86l-5 22H20z"/></clipPath>
+          </defs>
+          <path transform="translate(22 2) scale(2.2)" d="M20 2 37 8v14c0 10-7 17-17 20C10 39 3 32 3 22V8z" fill="#141826" stroke="url(#g)" stroke-width="1.6"/>
+          <path d="M50 15h32v8H71v20H61V23H50z" fill="url(#g)"/>
+          <path d="M25 46h86l-5 22H20z" fill="url(#g)" stroke="#05060A" stroke-width="2"/>
+          <g clip-path="url(#ribbon-clip)"><rect class="crest-shine" x="-20" y="40" width="22" height="34" fill="#fff"/></g>
+          <text class="crest-name" id="brand-name" x="66" y="64" text-anchor="middle">Tincho</text>
+          <path d="M35 71h64l-4 14H31z" fill="#141826" stroke="url(#g)" stroke-width="1.5"/>
+          <text class="crest-last" id="brand-last" x="65.5" y="81.6" text-anchor="middle">Challenge</text>
+        </svg>
+      </a>
+      <nav class="nav" aria-label="Secciones">
+        <a href="/#tabla">Ranking</a>
+        <a href="podio.html">Podio</a>
+        <a href="reglas.html" aria-current="page">Reglas</a>
+      </nav>
+      <a class="refresh" href="admin.html">Admin</a>
+    </div>
+  </header>
+
+  <section class="hero hero-final">
+    <div class="hero-rays" aria-hidden="true"></div>
+    <div class="wrap hero-inner">
+      <p class="chip" id="chip">Edición I · 2026</p>
+      <h1><span class="gold">Reglas</span></h1>
+      <p class="lead">Un torneo de SoloQ entre amigos: cada uno escala solo, con su propia cuenta.</p>
+    </div>
+  </section>
+
+  <main class="wrap" id="reglas">
+    <!-- Las reglas se editan acá, a mano. Cada <li> es una regla:
+         class="no" = prohibido (rojo), class="ok" = permitido (verde), sin clase = informativa.
+         Las partidas por día (class="rule-limit") y los días de cupo liberado (class="rule-free")
+         se completan solos desde participants.json. -->
+    <section class="block rules">
+      <div class="rule-group">
+        <h2>El formato</h2>
+        <ul class="rule-list">
+          <li>
+            <h3>Se juega solo</h3>
+            <p>Es un torneo de SoloQ. Cada participante juega únicamente partidas clasificatorias en solitario.</p>
+          </li>
+          <li>
+            <h3>Banco de partidas: <span class="rule-limit">8</span> por día, acumulables</h3>
+            <p>Cada día se suman <span class="rule-limit">8</span> partidas de SoloQ a tu banco, y las que no jugás se guardan para los días siguientes. Por ejemplo: si hoy jugás 4, mañana tenés 12 disponibles. El día va de 00:00 a 23:59, hora de Argentina, y las remakes no descuentan.</p>
+          </li>
+          <li class="ok">
+            <span class="tag ok">Cupo liberado</span>
+            <h3>Los últimos <span class="rule-free">3</span> días, sin límite</h3>
+            <p>En los últimos <span class="rule-free">3</span> días del torneo se libera el cupo y se puede jugar sin límite de partidas. Por eso el banco junta, como máximo, las partidas de todos los días del torneo menos esos <span class="rule-free">3</span>.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h2>Lo que está prohibido</h2>
+        <p class="rule-note">Cualquiera de estas faltas deja al participante <b>fuera del torneo</b>.</p>
+        <ul class="rule-list">
+          <li class="no">
+            <span class="tag hot">Prohibido</span>
+            <h3>Jugar en dúo</h3>
+            <p>Jugar en dúo está estrictamente prohibido.</p>
+          </li>
+          <li class="no">
+            <span class="tag hot">Prohibido</span>
+            <h3>WinTrade</h3>
+            <p>El WinTrade está estrictamente prohibido.</p>
+          </li>
+          <li class="no">
+            <span class="tag hot">Prohibido</span>
+            <h3>Aplicaciones de terceros</h3>
+            <p>Por obvias razones, está prohibido el uso de aplicaciones de terceros o “hacks”.</p>
+          </li>
+          <li class="no">
+            <span class="tag hot">Prohibido</span>
+            <h3>Que otra persona juegue tu cuenta</h3>
+            <p>Cada cuenta la puede jugar solamente la persona participante. No puede jugarla un boost ni ninguna persona ajena al torneo.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h2>Antes de SoloQ</h2>
+        <ul class="rule-list">
+          <li>
+            <h3>10 partidas de reclutamiento</h3>
+            <p>Todas las cuentas tienen que jugar 10 partidas de reclutamiento en modo Normal para poder entrar a SoloQ. Es un requisito del torneo: con esas partidas se genera el MMR de cada cuenta.</p>
+          </li>
+          <li class="ok">
+            <span class="tag ok">Permitido</span>
+            <h3>Jugarlas juntos</h3>
+            <p>Durante esas 10 partidas previas a SoloQ sí está permitido jugar juntos.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h2>Si te cruzás con otro participante</h2>
+        <ul class="rule-list">
+          <li class="ok">
+            <span class="tag ok">Permitido</span>
+            <h3>Entrar en llamada por Discord</h3>
+            <p>Si por mera coincidencia te toca en el mismo equipo con cualquiera de los participantes del torneo, pueden entrar en llamada por Discord.</p>
+          </li>
+        </ul>
+      </div>
+
+      <div class="rule-group">
+        <h2>El espíritu del torneo</h2>
+        <p class="rule-spirit">El torneo está pensado para generar una competitividad sana. No queremos que se vuelva un torneo tóxico: siempre con respeto mutuo, acorde a la confianza que tenga cada uno de los participantes.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <p class="foot-brand"><span id="foot-name">Tincho Challenge</span></p>
+      <p>Rangos e historial desde la API oficial de Riot Games.</p>
+      <p class="legal">Tincho Challenge no está respaldado por Riot Games y no refleja las opiniones de Riot Games ni de nadie oficialmente involucrado en la producción o gestión de League of Legends. League of Legends y Riot Games son marcas registradas de Riot Games, Inc.</p>
+      <p class="copy">© 2026 Tincho Challenge</p>
+    </div>
+  </footer>
+
+  <script src="reglas.js" type="module"></script>
+</body>
+</html>

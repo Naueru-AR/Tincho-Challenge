@@ -99,6 +99,8 @@ function body(cfg, rows, demo) {
     start: cfg.start,
     end: cfg.end,
     highEloFrom: cut,
+    // Momento en que empiezan los últimos días del torneo, con el cupo de partidas liberado.
+    freeFrom: new Date(new Date(cfg.end).getTime() - (cfg.freeLastDays ?? 3) * 24 * 60 * 60 * 1000).toISOString(),
     demo,
     updatedAt: new Date().toISOString(),
     players,

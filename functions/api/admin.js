@@ -6,7 +6,7 @@
 // No le consulta nada a Riot: lee lo que fue guardando lib/duo.js cada vez que se
 // recalculó la tabla. Por eso abre al instante aunque haya muchos jugadores.
 import { loadConfig, getAccount, isDemo } from "../../lib/riot.js";
-import { WINDOW, adminView, applyRecords, emptyState, loadState } from "../../lib/duo.js";
+import { WINDOW, adminView, applyRecords, emptyState, forgetOthers, loadState } from "../../lib/duo.js";
 import { demoRecords } from "../../lib/demo.js";
 
 const reply = (data, status = 200) =>
@@ -33,6 +33,7 @@ export async function onRequestGet(context) {
   const demo = isDemo(context);
   const roster = new Map(cfg.players.map((p) => [p.riotId.toLowerCase(), p.alias || p.riotId.split("#")[0]]));
 
+  const puuids = new Set();
   const players = await Promise.all(
     cfg.players.map(async (p, i) => {
       const [name, tag] = p.riotId.split("#");
@@ -51,6 +52,7 @@ export async function onRequestGet(context) {
         }
         const acc = await getAccount(p.riotId, cfg, env); // en caché 7 días
         if (!acc) return { ...base, error: "No encontramos ese Riot ID." };
+        puuids.add(acc.puuid);
         return { ...base, ...adminView(await loadState(acc.puuid, env)) };
       } catch (err) {
         return { ...base, error: err.status === 429 ? "Riot está limitando las consultas. Probá en un minuto." : err.message };
@@ -58,12 +60,19 @@ export async function onRequestGet(context) {
     })
   );
 
+  // Limpieza: si se pudo identificar a todos los participantes, se borra lo guardado de las
+  // cuentas que ya no están en la lista (por ejemplo, las de prueba). Si alguno falló, no
+  // se borra nada, para no perder datos por un error pasajero.
+  if (!demo && players.every((p) => !p.error)) {
+    context.waitUntil(forgetOthers(puuids, env).catch((err) => console.log("forgetOthers:", err.message)));
+  }
+
   return reply({
     title: cfg.title,
     demo,
     storage: Boolean(env.LP), // sin KV no se puede guardar nada y el panel queda vacío
     window: WINDOW,
-    limit: cfg.dailyLimit ?? 12,
+    limit: cfg.dailyLimit ?? 8,
     players,
   });
 }

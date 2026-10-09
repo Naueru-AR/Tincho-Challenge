@@ -1,21 +1,14 @@
 {
   "title": "Tincho Challenge",
   "edition": "Edición I",
-  "start": "2026-10-01T00:00:00-03:00",
-  "end": "2026-11-01T00:00:00-03:00",
+  "start": "2026-10-15T00:00:00-03:00",
+  "end": "2026-11-15T00:00:00-03:00",
   "platform": "la2",
   "region": "americas",
   "opggRegion": "las",
-  "dailyLimit": 12,
+  "dailyLimit": 8,
+  "freeLastDays": 3,
   "duo": { "streak": 2, "highStreak": 3, "perDay": 4, "neverAgainst": 5 },
   "highEloFrom": { "tier": "DIAMOND", "rank": "III" },
-  "prizes": [],
-  "players": [
-    { "alias": "Kairo", "riotId": "Kairo#SYS" },
-    { "alias": "Fusk4", "riotId": "Fusk4#Fmboy" },
-    { "alias": "Liand", "riotId": "Liand#liand" },
-    { "alias": "whos tao", "riotId": "whos tao#Las1" },
-    { "alias": "mauriciodavid", "riotId": "mauriciodavid#LAS" },
-    { "alias": "Snoo", "riotId": "Snoo#LAS" }
-  ]
+  "players": []
 }

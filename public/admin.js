@@ -45,14 +45,14 @@ function currentHtml(s) {
     </li>`;
 }
 
-// Histórico: sospechas altas y días pasados del límite, con la fecha en que se detectaron.
+// Histórico: sospechas altas y días en que se pasó del banco, con la fecha de detección.
 function historyHtml(h) {
   const when = `<span class="suspect-date">Detectado el ${fmtWhen.format(new Date(h.at))}</span>`;
   if (h.kind === "limit") {
     return `
       <li class="suspect alto">
-        <span class="suspect-who">Límite diario superado <span class="tag hot">+${h.over}</span></span>
-        <span class="suspect-why">Jugó <b>${h.played} partidas</b> el ${day(h.date)}.</span>
+        <span class="suspect-who">Banco de partidas superado <span class="tag hot">+${h.over}</span></span>
+        <span class="suspect-why">Al ${day(h.date)} llevaba <b>${h.played} partidas</b> jugadas, con <b>${h.allowed ?? "?"}</b> habilitadas hasta ese día.</span>
         ${when}
       </li>`;
   }
@@ -93,10 +93,10 @@ function render(data) {
   $("adm-summary").innerHTML =
     box(now, "sospecha vigente de dúo", "sospechas vigentes de dúo") +
     box(duos, "sospecha alta en el histórico", "sospechas altas en el histórico") +
-    box(days, "día con el límite superado", "días con el límite superado");
+    box(days, "día con el banco superado", "días con el banco superado");
   $("adm-cards").innerHTML = flagged.length
     ? flagged.map(cardHtml).join("")
-    : `<p class="adm-clear">Sin alertas: se revisaron ${list.length} jugadores y ninguno tiene posibles dúos ni días pasados del límite.</p>`;
+    : `<p class="adm-clear">Sin alertas: se revisaron ${list.length} jugadores y ninguno tiene posibles dúos ni se pasó de su banco de partidas.</p>`;
 
   const checked = list.map((p) => p.checkedAt).filter(Boolean).sort();
   const pending = list.filter((p) => !p.error && !p.checkedAt).length;

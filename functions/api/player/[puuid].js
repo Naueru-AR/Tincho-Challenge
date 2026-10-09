@@ -1,8 +1,10 @@
 // GET /api/player/:puuid
-// Partidas de SoloQ que el jugador jugó HOY (hay un límite de partidas por día).
+// Partidas de SoloQ que el jugador jugó HOY y cuántas le quedan en su banco de partidas
+// (cada día suma `dailyLimit` y las que no usa se acumulan; ver lib/duo.js).
 // El historial se reinicia cada medianoche: no se muestran partidas de días anteriores.
 import { loadConfig, getMatchIds, getMatch, isRemake, tzOffset, cachedResponse, withBudget, json, isDemo } from "../../../lib/riot.js";
-import { demoMatches } from "../../../lib/demo.js";
+import { demoMatches, demoBank } from "../../../lib/demo.js";
+import { allowanceUntil, dayKey, isFreeDay, loadState, playedBefore } from "../../../lib/duo.js";
 import { getLpChanges } from "../../../lib/lp.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -14,17 +16,20 @@ function startOfToday(cfg) {
   return Math.floor((Date.now() + offset) / DAY) * DAY - offset;
 }
 
-// Las remakes se informan aparte y no cuentan para el límite diario.
-function respond(matches, limit, maxAge) {
+// `bank` es cuántas partidas tenía disponibles al empezar el día, o null si es uno de los
+// últimos días del torneo, con el cupo liberado. Las remakes se informan aparte y no
+// descuentan del banco.
+function respond(matches, limit, bank, maxAge) {
   const played = matches.filter((m) => !m.remake).length;
-  return json({ matches, today: { limit, played } }, maxAge);
+  const today = bank === null ? { limit, played, free: true } : { limit, played, bank, left: bank - played };
+  return json({ matches, today }, maxAge);
 }
 
 export async function onRequestGet(context) {
   const puuid = context.params.puuid;
   const cfg = await loadConfig(context);
-  const limit = cfg.dailyLimit ?? 12;
-  if (isDemo(context) || puuid.startsWith("demo-")) return respond(demoMatches(puuid), limit, 0);
+  const limit = cfg.dailyLimit ?? 8;
+  if (isDemo(context) || puuid.startsWith("demo-")) return respond(demoMatches(puuid), limit, demoBank(puuid), 0);
 
   // Las partidas de hoy solo cuentan si el torneo ya empezó.
   const dayStart = Math.max(startOfToday(cfg), new Date(cfg.start).getTime());
@@ -34,10 +39,17 @@ export async function onRequestGet(context) {
 
 async function today(puuid, cfg, limit, dayStart, env) {
   try {
-    const [ids, lpChanges] = await Promise.all([
+    const [ids, lpChanges, state] = await Promise.all([
       getMatchIds(puuid, cfg, env, MAX_PER_DAY, dayStart),
       getLpChanges(puuid, env),
+      loadState(puuid, env), // lo jugado en días anteriores, para el banco
     ]);
+    // Banco al empezar el día: lo habilitado hasta hoy menos lo ya jugado antes de hoy.
+    // Si el torneo todavía no empezó, se muestra el banco del primer día.
+    const date = dayKey(Date.now(), cfg);
+    const bank = isFreeDay(date, cfg) ? null
+      : Date.now() < new Date(cfg.start).getTime() ? limit
+      : allowanceUntil(date, cfg) - playedBefore(state, date, cfg);
     const loaded = await Promise.all(ids.map((id) => getMatch(id, cfg, env)));
     const matches = loaded.filter(Boolean).map((m) => {
       const me = m.info.participants.find((p) => p.puuid === puuid);
@@ -56,7 +68,7 @@ async function today(puuid, cfg, limit, dayStart, env) {
         endedAt: m.info.gameEndTimestamp,
       };
     });
-    return { response: respond(matches, limit, 120), cacheable: true };
+    return { response: respond(matches, limit, bank, 120), cacheable: true };
   } catch (err) {
     const msg = err.status === 429 || err.status === "budget" ? "Riot está limitando las consultas. Probá en un minuto." : err.message;
     const response = new Response(JSON.stringify({ error: msg }), { status: 502, headers: { "Content-Type": "application/json" } });
