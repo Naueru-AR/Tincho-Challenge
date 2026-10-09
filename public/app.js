@@ -239,9 +239,6 @@ setInterval(tick, 1000);
 
 /* ---------- carga ---------- */
 async function load() {
-  const btn = $("refresh");
-  btn.setAttribute("aria-busy", "true");
-  btn.textContent = "Actualizando…";
   if (!lastData) $("board").innerHTML = Array.from({ length: 6 }, () => `<li class="skeleton"></li>`).join("");
   try {
     const res = await fetch(`/api/leaderboard${demoParam}`);
@@ -257,10 +254,7 @@ async function load() {
     renderLadder(lastData.players);
   } catch (e) {
     $("updated").textContent = `No se pudo actualizar: ${e.message}`;
-    if (!lastData) $("board").innerHTML = `<li class="history-msg">No pudimos cargar la tabla. Revisá tu conexión y tocá Actualizar.</li>`;
-  } finally {
-    btn.removeAttribute("aria-busy");
-    btn.textContent = "Actualizar";
+    if (!lastData) $("board").innerHTML = `<li class="history-msg">No pudimos cargar la tabla. Revisá tu conexión y recargá la página.</li>`;
   }
 }
 
@@ -268,7 +262,6 @@ $("board").addEventListener("click", (e) => {
   const btn = e.target.closest(".toggle");
   if (btn && !btn.disabled) toggleHistory(btn.closest(".row"));
 });
-$("refresh").addEventListener("click", load);
 let resizeT;
 addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => lastData && renderLadder(lastData.players), 150); });
 

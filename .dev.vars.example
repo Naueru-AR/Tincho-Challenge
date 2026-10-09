@@ -1,0 +1,8 @@
+# Copiá este archivo como .dev.vars (que no se sube al repo) y completá los valores.
+# Solo sirve para probar en tu computadora; el sitio publicado usa los secrets de Cloudflare.
+
+# Key de Riot. Sin esta línea el sitio muestra datos de ejemplo.
+RIOT_API_KEY=RGAPI-tu-key
+
+# Clave para entrar al panel del organizador (/admin). Elegí la que quieras.
+ADMIN_KEY=una-clave-larga-y-dificil

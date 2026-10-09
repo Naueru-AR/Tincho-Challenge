@@ -23,6 +23,8 @@ export async function onRequestGet(context) {
     out.riotMessage = res.ok ? "OK" : (await res.json().catch(() => null))?.status?.message ?? null;
   }
 
+  out.adminKey = Boolean(context.env.ADMIN_KEY); // clave del panel del organizador
+
   // KV de los LP por partida: si está conectado y cuántos jugadores tienen "foto" guardada.
   out.lpBinding = Boolean(context.env.LP);
   if (out.lpBinding) {

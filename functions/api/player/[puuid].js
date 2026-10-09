@@ -1,18 +1,16 @@
 // GET /api/player/:puuid
 // Partidas de SoloQ que el jugador jugó HOY (hay un límite de partidas por día).
 // El historial se reinicia cada medianoche: no se muestran partidas de días anteriores.
-import { loadConfig, getMatchIds, getMatch, isRemake, json, isDemo } from "../../../lib/riot.js";
+import { loadConfig, getMatchIds, getMatch, isRemake, tzOffset, json, isDemo } from "../../../lib/riot.js";
 import { demoMatches } from "../../../lib/demo.js";
 import { getLpChanges } from "../../../lib/lp.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 const MAX_PER_DAY = 30; // cada partida es una llamada a Riot; el plan gratis de Cloudflare permite 50 por pedido
 
-// Medianoche de hoy en la zona horaria del torneo, que se toma de la fecha "start"
-// de participants.json (por ejemplo "-03:00" para Argentina).
+// Medianoche de hoy en la zona horaria del torneo.
 function startOfToday(cfg) {
-  const m = /([+-])(\d\d):(\d\d)$/.exec(cfg.start);
-  const offset = m ? (m[1] === "-" ? -1 : 1) * (Number(m[2]) * 60 + Number(m[3])) * 60000 : 0;
+  const offset = tzOffset(cfg);
   return Math.floor((Date.now() + offset) / DAY) * DAY - offset;
 }
 

@@ -4,15 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#05060A">
-  <title>Podio final · Tincho Challenge</title>
-  <meta name="description" content="Podio final del Tincho Challenge: los tres primeros de High Elo y de Low Elo.">
+  <title>Panel del organizador · Tincho Challenge</title>
+  <meta name="robots" content="noindex, nofollow">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,700;1,800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip" href="#podiums">Saltar al podio</a>
+  <a class="skip" href="#adm">Saltar al panel</a>
 
   <header class="bar">
     <div class="wrap bar-inner">
@@ -33,25 +33,40 @@
       </a>
       <nav class="nav" aria-label="Secciones">
         <a href="/#tabla">Ranking</a>
-        <a href="podio.html" aria-current="page">Podio</a>
+        <a href="podio.html">Podio</a>
         <a href="premios.html">Premios</a>
       </nav>
-      <a class="refresh" href="admin.html">Admin</a>
     </div>
   </header>
 
-  <section class="hero hero-final">
-    <div class="hero-rays" aria-hidden="true"></div>
-    <div class="wrap hero-inner">
-      <p class="chip" id="chip">Edición I · 2026</p>
-      <h1>Podio <span class="gold">final</span></h1>
-      <p class="lead" id="final-lead"></p>
-    </div>
-  </section>
-
-  <main class="wrap">
+  <main class="wrap" id="adm">
     <section class="block">
-      <div id="podiums" class="podiums"></div>
+      <p class="eyebrow">Solo para el organizador</p>
+      <h1 class="adm-title">Panel</h1>
+
+      <div id="adm-login" class="adm-login">
+        <form id="adm-form">
+          <label for="adm-key">Clave del organizador</label>
+          <div class="adm-field">
+            <input id="adm-key" type="password" autocomplete="current-password" required>
+            <button class="refresh" type="submit">Entrar</button>
+          </div>
+          <p id="adm-login-msg" class="adm-err" role="alert"></p>
+        </form>
+      </div>
+
+      <div id="adm-panel" hidden>
+        <div class="adm-bar">
+          <p id="adm-status" class="updated" aria-live="polite"></p>
+          <button id="adm-refresh" class="refresh" type="button">Actualizar</button>
+          <button id="adm-exit" class="refresh" type="button">Salir</button>
+        </div>
+        <p id="adm-demo" class="demo" hidden>Estás viendo datos de ejemplo.</p>
+        <p id="adm-note" class="demo" hidden>El almacenamiento KV no está conectado: el panel funciona, pero vuelve a pedirle todas las partidas a Riot cada vez.</p>
+        <div id="adm-summary" class="adm-summary"></div>
+        <p class="hint">Una alerta de dúo es una señal para revisar, no una prueba. Que dos jugadores nunca se hayan enfrentado la hace más fuerte.</p>
+        <div id="adm-cards" class="adm-cards"></div>
+      </div>
     </section>
   </main>
 
@@ -64,6 +79,6 @@
     </div>
   </footer>
 
-  <script src="podio.js" type="module"></script>
+  <script src="admin.js" type="module"></script>
 </body>
 </html>

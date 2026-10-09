@@ -29,13 +29,16 @@ public/               ← el sitio (HTML, CSS, JS) + participants.json
   index.html, app.js  página principal
   podio.html, podio.js  podio final por bracket
   premios.html, premios.js  premios del torneo
+  admin.html, admin.js  panel privado del organizador
   shared.js           lo que comparten las dos páginas
 functions/api/        ← endpoints que corren en Cloudflare (esconden la API key)
   leaderboard.js      GET /api/leaderboard
   player/[puuid].js   GET /api/player/:puuid
   diag.js             GET /api/diag (revisa la API key sin mostrarla)
+  admin.js            GET /api/admin (panel del organizador, pide clave)
 lib/riot.js           cliente de Riot con caché
 lib/lp.js             LP por partida (fotos del rango en Cloudflare KV)
+lib/duo.js            posibles dúos y partidas por día de todo el torneo
 lib/demo.js           datos de ejemplo
 ```
 
@@ -138,11 +141,14 @@ npm run dev        # abre http://localhost:8788
 Las versiones exactas quedan fijadas en `package-lock.json`, que sí va al repo.
 
 Así como está muestra los datos de ejemplo. Para ver datos reales, creá a mano un
-archivo `.dev.vars` en la raíz del proyecto con esta única línea:
+archivo `.dev.vars` en la raíz del proyecto (podés copiar `.dev.vars.example`) con
+tu key:
 
 ```
 RIOT_API_KEY=RGAPI-tu-key
 ```
+
+Ahí también va `ADMIN_KEY`, la clave del panel del organizador para pruebas locales.
 
 - `.dev.vars` **no viene con el proyecto** y está en el `.gitignore`: guarda tu key
   y nunca se sube a GitHub. Cada uno crea el suyo.
@@ -174,6 +180,8 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
 
 - `backup-produccion-2026-10-09`: el sitio antes del rediseño (Top 3, menú, podio
   final, límite diario).
+- `backup-produccion-2026-10-09-b`: el sitio con el rediseño, antes de agregar el
+  panel del organizador y el botón Admin.
 
 Para ver los backups y volver a uno:
 
@@ -304,6 +312,64 @@ Cómo se cuenta:
 - Los LP del día suman solo las partidas que tienen LP registrados (ver "LP por
   partida").
 - Se muestran hasta 30 partidas por día.
+
+## Panel del organizador (privado)
+
+En `/admin` hay un panel que pide una clave. Se entra con el botón **Admin**
+de la barra superior (antes ahí estaba "Actualizar"; la tabla se sigue
+actualizando sola cada 5 minutos). Sirve para
+controlar las reglas del torneo. **Solo muestra a los jugadores que tienen alguna
+alerta**; los que están en regla no aparecen (y sus datos ni viajan al navegador).
+Si nadie tiene alertas, lo dice. Para cada jugador con alertas muestra:
+
+- **Posible dúo** (el dúo está prohibido). Riot no informa si una partida se jugó
+  en dúo, así que se detecta por estadística, igual para otros participantes que
+  para desconocidos. Que te toque alguien una vez pasa; seguido, no. Salta una
+  sospecha cuando alguien estuvo en el mismo equipo que el jugador:
+
+  | Nivel | Cuándo |
+  |---|---|
+  | **Alta** | 3 o más partidas **seguidas**; o 5 o más juntos sin enfrentarse nunca; o 2 seguidas si el otro es un participante del torneo |
+  | **Media** | 2 partidas **seguidas**; o 4 en un mismo día, aunque no sean seguidas |
+
+  Cada sospecha muestra cuántas veces se cruzaron, cuántas en el mismo equipo y
+  cuántas en contra, y **qué tan probable es que sea casualidad**. Si dos jugadores
+  caen en la misma partida por azar, quedan en el mismo equipo 4 de cada 9 veces;
+  un dúo, siempre. Por eso 3 veces juntos y ninguna en contra pasa por casualidad
+  el 9 % de las veces, 4 veces el 4 % y 5 veces el 1,7 %. Sigue siendo una
+  **alerta para revisar, no una prueba**: en elo alto hay poca gente en cola y se
+  repiten compañeros. (En Maestro o más, además, Riot no permite hacer cola en dúo.)
+- **Límite diario superado**: los días de todo el torneo en que jugó más partidas
+  que el límite, con cuántas se pasó. (El historial público solo muestra hoy.)
+
+Las remakes no cuentan ni cortan una racha. Los umbrales se cambian en
+`participants.json`:
+
+```json
+"duo": { "streak": 2, "highStreak": 3, "perDay": 4, "neverAgainst": 5 }
+```
+
+### Activarlo
+
+1. En Cloudflare → **Configuración → Variables y secretos** → **Agregar** un
+   *Secreto* llamado `ADMIN_KEY`, con una clave larga que elijas (en Producción).
+2. Reimplementá, como con cualquier variable nueva.
+3. Entrá a `https://TU-SITIO.pages.dev/admin` y poné esa clave.
+
+`/api/diag` muestra `adminKey: true` cuando está configurada. Sin `ADMIN_KEY` el
+panel no abre.
+
+### Cómo funciona
+
+La clave se guarda solo en esa pestaña del navegador y viaja en cada pedido; el
+servidor la compara con el secret y no responde nada sin ella. Al abrir el panel
+se le piden a Riot las partidas del torneo de cada jugador, de a 30 por pedido, y
+se guarda en KV con quién jugó cada una (`lib/duo.js`), así las visitas siguientes
+solo traen las partidas nuevas. La primera vez puede tardar unos segundos por
+jugador.
+
+Para probarlo en tu computadora, `ADMIN_KEY` va en `.dev.vars` (hay un ejemplo en
+`.dev.vars.example`).
 
 ## Remakes
 

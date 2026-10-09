@@ -392,3 +392,50 @@ a.avatar:hover, a.avatar:focus-visible {
 
 /* Al saltar a una sección, que no quede tapada por la barra fija */
 .block { scroll-margin-top: 5.5rem; }
+
+/* Panel del organizador (admin.html) */
+.adm-title { font-size: clamp(2.4rem, 6vw, 3.4rem); margin-bottom: 1.4rem; text-shadow: none; }
+.adm-login { max-width: 26rem; padding: 1.3rem; border: 1px solid var(--line); border-radius: 16px; background: var(--dots), var(--panel); }
+.adm-login label { display: block; margin-bottom: .5rem; font: 700 .8rem var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
+.adm-field { display: flex; gap: .6rem; }
+.adm-field input { flex: 1; min-width: 0; padding: .6rem .8rem; font: 500 1rem var(--text); color: var(--ink); background: var(--bg); border: 1px solid var(--line-2); border-radius: 10px; }
+.adm-err { margin: .7rem 0 0; color: var(--loss); font-size: .9rem; }
+.adm-err:empty { display: none; }
+.adm-bar { display: flex; flex-wrap: wrap; align-items: center; gap: .6rem; margin-bottom: 1rem; }
+.adm-bar .updated { margin: 0 auto 0 0; }
+.adm-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: .8rem; margin-top: 1rem; }
+.adm-summary div { padding: 1rem 1.2rem; border: 1px solid var(--line); border-radius: 14px; background: var(--dots), var(--panel); }
+.adm-summary b { display: block; font: italic 800 2.4rem/1 var(--display); color: var(--win); }
+.adm-summary span { color: var(--muted); font-size: .9rem; }
+.adm-summary .hot { border-color: color-mix(in srgb, var(--loss) 55%, transparent); }
+.adm-summary .hot b { color: var(--loss); }
+.adm-cards { display: grid; gap: .9rem; margin-top: 1.2rem; }
+.adm-card { padding: 1.1rem 1.2rem 1.2rem; border: 1px solid var(--line); border-radius: 14px; background: var(--dots), var(--panel); }
+.adm-card.flagged { border-color: color-mix(in srgb, var(--loss) 50%, transparent); }
+.adm-card h3 { display: flex; flex-wrap: wrap; align-items: baseline; gap: .3rem .7rem; margin: 0; font: 800 1.5rem/1.1 var(--display); }
+.adm-card h3 a { text-decoration: none; }
+.adm-card h3 a:hover { color: var(--gold); }
+.adm-card h3 small { font: 400 .85rem var(--text); color: var(--dim); }
+.adm-card h3 .tag { margin-left: auto; }
+.adm-card h4 { margin: 1.1rem 0 .5rem; font: 700 .75rem var(--display); letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+.adm-card h4 small { margin-left: .4rem; color: var(--dim); letter-spacing: .1em; }
+.adm-meta, .adm-none { margin: .3rem 0 0; color: var(--dim); font-size: .88rem; }
+.tag { display: inline-block; padding: .2rem .5rem; border: 1px solid var(--line-2); border-radius: 6px; font: 700 .68rem/1.2 var(--display); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); }
+.tag.ok { color: var(--win); border-color: color-mix(in srgb, var(--win) 45%, transparent); }
+.tag.hot { color: #fff; background: var(--loss); border-color: var(--loss); }
+.suspects { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+.suspect { display: grid; gap: .2rem; padding: .7rem .9rem; border-left: 3px solid var(--loss); border-radius: 0 10px 10px 0; background: color-mix(in srgb, var(--loss) 8%, transparent); }
+.suspect-who { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; font: 700 1.15rem var(--display); }
+.suspect-who a { text-decoration: none; }
+.suspect-who a:hover { color: var(--gold); text-decoration: underline; }
+.suspect-why { color: var(--ink); font-size: .92rem; }
+.suspect-nums { color: var(--muted); font-size: .85rem; }
+.suspect-nums b, .suspect-why b { color: var(--ink); }
+.adm-days { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: .4rem; }
+.adm-days li { padding: .3rem .6rem; border: 1px solid var(--line-2); border-radius: 8px; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.adm-days b { margin-left: .25rem; font: 800 1rem var(--display); color: var(--ink); }
+.adm-days .over { border-color: var(--loss); color: var(--loss); }
+.adm-days .over b, .adm-days i { color: var(--loss); font-style: normal; font-weight: 700; }
+.adm-clear { margin: 0; padding: 1.2rem; border: 1px solid color-mix(in srgb, var(--win) 40%, transparent); border-radius: 14px; color: var(--win); background: color-mix(in srgb, var(--win) 6%, transparent); }
+.tag.warn { color: #1A1305; background: var(--gold); border-color: var(--gold); }
+.suspect.medio { border-left-color: var(--gold); background: color-mix(in srgb, var(--gold) 7%, transparent); }

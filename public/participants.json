@@ -7,6 +7,7 @@
   "region": "americas",
   "opggRegion": "las",
   "dailyLimit": 12,
+  "duo": { "streak": 2, "highStreak": 3, "perDay": 4, "neverAgainst": 5 },
   "highEloFrom": { "tier": "DIAMOND", "rank": "III" },
   "prizes": [],
   "players": [
