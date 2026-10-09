@@ -1,6 +1,6 @@
 // GET /api/player/:puuid
 // Historial de partidas SoloQ del jugador desde que empezó el torneo.
-import { loadConfig, getMatchIds, getMatch, json, isDemo } from "../../../lib/riot.js";
+import { loadConfig, getMatchIds, getMatch, isRemake, json, isDemo } from "../../../lib/riot.js";
 import { demoMatches } from "../../../lib/demo.js";
 import { getLpChanges } from "../../../lib/lp.js";
 
@@ -26,6 +26,7 @@ export async function onRequestGet(context) {
         return {
           id: m.metadata.matchId,
           lpChange: lpChanges[m.metadata.matchId] ?? null, // null = no lo tenemos registrado
+          remake: isRemake(m), // no cuenta como victoria ni derrota
           win: me.win,
           champion: me.championName,
           position: me.teamPosition,

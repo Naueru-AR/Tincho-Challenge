@@ -164,6 +164,12 @@ sesión en GitHub; después queda guardado.
 No se suben al repo (están en el `.gitignore`): `node_modules/`, `.wrangler/`,
 `.dev.vars` y `.claude/` (configuración local de Claude Code).
 
+## Remakes
+
+Las partidas que terminan en remake (menos de 5 minutos o rendición temprana)
+aparecen en el historial marcadas como **Remake**, en gris, y no cuentan como
+victoria ni derrota en el resumen ni en los LP.
+
 ## LP por partida (+25 / −18)
 
 La API de Riot **no informa cuántos LP dio cada partida**. Se calculan como lo hace

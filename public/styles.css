@@ -175,6 +175,9 @@ h2 { margin: 0 0 1.2rem; font: 800 clamp(2rem, 5vw, 2.6rem)/1 var(--display); te
 }
 .game.win { --res-c: var(--win); }
 .game.loss { --res-c: var(--loss); }
+.game.remake { --res-c: var(--dim); }
+.game.remake .g-res { font-size: .7rem; }
+.game.remake .g-champ, .game.remake .g-kda, .game.remake img { opacity: .55; }
 .game img { width: 2.6rem; height: 2.6rem; border-radius: 8px; display: block; background: var(--panel-2); }
 .g-champ { font: 700 1.05rem var(--display); }
 .g-meta { display: block; color: var(--dim); font-size: .82rem; }
