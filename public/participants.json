@@ -6,6 +6,9 @@
   "platform": "la2",
   "region": "americas",
   "opggRegion": "las",
+  "dailyLimit": 12,
+  "highEloFrom": { "tier": "DIAMOND", "rank": "III" },
+  "prizes": [],
   "players": [
     { "alias": "Kairo", "riotId": "Kairo#SYS" },
     { "alias": "Fusk4", "riotId": "Fusk4#Fmboy" },

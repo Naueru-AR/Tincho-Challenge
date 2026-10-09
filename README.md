@@ -9,8 +9,10 @@ Todo corre gratis en **Cloudflare Pages** (sitio + funciones de servidor).
 |---|---|---|
 | Riot ID → PUUID | Riot `account-v1` (`americas`) | Sí |
 | Rango, LP, victorias y derrotas | Riot `league-v4` `entries/by-puuid` (`la2`) | Sí |
+| Ícono de la cuenta | Riot `summoner-v4` `summoners/by-puuid` (`la2`) | Sí |
 | Historial de partidas del torneo | Riot `match-v5` (`americas`, cola 420 = SoloQ) | Sí |
-| Íconos de campeones | Data Dragon (CDN de Riot) | No |
+| Imágenes de campeones e íconos de cuenta | Data Dragon (CDN de Riot) | No |
+| Emblema de cada rango | Community Dragon (archivos del cliente del juego) | No |
 | Perfil completo de cada jugador | Link a OP.GG | No |
 
 ### ¿Y la API de OP.GG?
@@ -24,6 +26,10 @@ OP.GG) y cada Riot ID enlaza a su perfil en OP.GG.
 
 ```
 public/               ← el sitio (HTML, CSS, JS) + participants.json
+  index.html, app.js  página principal
+  podio.html, podio.js  podio final por bracket
+  premios.html, premios.js  premios del torneo
+  shared.js           lo que comparten las dos páginas
 functions/api/        ← endpoints que corren en Cloudflare (esconden la API key)
   leaderboard.js      GET /api/leaderboard
   player/[puuid].js   GET /api/player/:puuid
@@ -161,21 +167,143 @@ git push
 La primera vez que hacés push desde una PC, Git abre una ventana para iniciar
 sesión en GitHub; después queda guardado.
 
+### Backups de producción
+
+Antes de un cambio grande se guarda una copia de lo que está publicado como
+*tag* de Git. Los que hay:
+
+- `backup-produccion-2026-10-09`: el sitio antes del rediseño (Top 3, menú, podio
+  final, límite diario).
+
+Para ver los backups y volver a uno:
+
+```bash
+git tag -l "backup-*"
+```
+
+```bash
+git revert --no-commit backup-produccion-2026-10-09..HEAD
+```
+
+El segundo comando deja el proyecto como estaba en ese backup, sin borrar el
+historial; después hay que hacer `git commit` y `git push` para publicarlo.
+
 No se suben al repo (están en el `.gitignore`): `node_modules/`, `.wrangler/`,
 `.dev.vars` y `.claude/` (configuración local de Claude Code).
+
+## Top 3 y podio final
+
+**Top 3** (página principal, arriba de la tabla): los tres primeros de la tabla
+general, sin separar por bracket. Cada tarjeta muestra el ícono de la cuenta, con
+una corona en la esquina para el primero, una medalla de plata para el segundo y
+una de bronce para el tercero. Si hay menos de tres jugadores con
+rango, los lugares que faltan dicen "Vacante".
+
+**Podio final** (`podio.html`): una página aparte con dos podios, High Elo y Low
+Elo. Se habilita sola cuando termina el torneo (fecha `end`): recién ahí aparece
+el botón "Ver el podio final" en el encabezado. Antes de esa fecha la página solo
+avisa cuándo se habilita. Para verla antes y probarla, abrí `/podio?preview`.
+
+### Ícono de la cuenta
+
+En el Top 3, en el podio final y en la tabla de posiciones cada jugador aparece
+con el **ícono de invocador** que tiene puesto en su cuenta de LoL (Riot
+`summoner-v4`, en caché 6 horas; la imagen sale de Data Dragon). Al pasar el
+mouse se resalta y al hacer clic abre su perfil en OP.GG en otra pestaña. Si el
+ícono no se puede cargar, se muestra la inicial del jugador.
+
+El corte entre brackets se define en `participants.json`:
+
+```json
+"highEloFrom": { "tier": "DIAMOND", "rank": "III" }
+```
+
+- **High Elo**: desde ese rango inclusive (Diamante III o más).
+- **Low Elo**: todo lo que esté por debajo (Diamante IV o menos).
+- El bracket se calcula con el **rango actual**. Para dejar fijo a un jugador,
+  agregale `"bracket": "high"` o `"bracket": "low"`.
+- Los jugadores sin rango no entran en ningún podio.
+
+El orden de la página principal es: encabezado, Top 3, tabla de posiciones y, al
+final, la escalera.
+
+## Tabla de posiciones
+
+Cada fila muestra el puesto, el ícono de la cuenta con el nombre, el rango y el
+winrate:
+
+- **Rango**: lleva el emblema oficial del rango (Hierro, Bronce… Retador) al lado
+  del nombre y los LP. Las imágenes salen de Community Dragon; si alguna no carga,
+  queda solo el texto.
+- **Winrate · V / D**: el porcentaje (verde si es 50 % o más, rojo si es menos),
+  las victorias y derrotas ("101V · 97D") y, debajo, una barra partida en dos: el
+  tramo verde es proporcional a las victorias y el rojo a las derrotas.
+
+## Menú y premios
+
+La barra superior tiene el escudo (lleva al inicio) y tres opciones:
+
+- **Ranking**: baja directo a la tabla de posiciones.
+- **Podio**: abre `podio.html` (el podio final por bracket).
+- **Premios**: abre `premios.html`.
+
+Los premios se cargan a mano en `participants.json`. Mientras la lista esté vacía,
+la página dice que todavía no están anunciados:
+
+```json
+"prizes": [
+  { "title": "1.º High Elo", "prize": "$50.000", "note": "Opcional: una aclaración" },
+  { "title": "1.º Low Elo", "prize": "$30.000" }
+]
+```
 
 ## Diseño
 
 Todo el estilo está en `public/styles.css`; los colores son variables en `:root`.
 
+- **Escudo de la barra superior**: el escudo con la T lleva el nombre del torneo
+  adentro, en dos cintas cortas que apenas sobresalen (las primeras palabras en la
+  dorada, la última en la de abajo). Sale del `title` de `participants.json` y se comprime solo si es largo.
+  Lleva al inicio y, al pasar el mouse, se inclina, brilla y le cruza un destello.
 - **Encabezado centrado**: título en itálica con el año "fantasma" detrás (solo
   contorno), fechas, cantidad de jugadores, cuenta regresiva y botón.
 - **Sol de rayos dorados** girando muy lento detrás del título (`.hero-rays`). Se
   detiene si el sistema pide menos animaciones.
 - **Formas inclinadas**: las cajas de la cuenta regresiva, el botón y los títulos
   comparten la misma inclinación (`--slant`).
+- **Pie de página**: letra chica, con el aviso legal de Riot y el copyright
+  "© 2026 Tincho Challenge". El año está escrito a mano en los tres `.html`.
 - **Colores**: fondo oscuro y dorado como base; el celeste (`--sky`) es el acento
   secundario. El rojo queda solo para derrotas.
+
+## Límite de partidas por día
+
+El torneo tiene un tope de partidas por día, que se define en `participants.json`:
+
+```json
+"dailyLimit": 12
+```
+
+El historial de cada jugador es **solo del día de hoy**: se reinicia a la
+medianoche y no muestra partidas de días anteriores. Al abrirlo aparece una franja
+de resumen de todo el ancho y, debajo, la lista de las partidas de hoy:
+
+- **A la izquierda**: cuántas partidas jugó sobre el límite ("7 de 12") y si le
+  quedan, si llegó al límite o si lo superó. Si lo superó, el número y la barra de
+  12 tramos se ponen en rojo, con el cartel "Límite superado por N".
+- **A la derecha**: ganadas, perdidas, remakes y LP sumados de esas mismas
+  partidas de hoy.
+
+Cómo se cuenta:
+
+- El día va de 00:00 a 23:59 en la zona horaria del torneo, que se toma de la
+  fecha `start` (`-03:00` es Argentina).
+- Una partida cuenta para el día en que **empezó**.
+- Las **remakes no cuentan** como partidas jugadas ni para el límite; se listan y
+  se informan aparte.
+- Los LP del día suman solo las partidas que tienen LP registrados (ver "LP por
+  partida").
+- Se muestran hasta 30 partidas por día.
 
 ## Remakes
 
@@ -225,7 +353,8 @@ Después en el Worker → **Settings → Trigger events → Add → Cron trigger
 ## Límites del plan gratis
 
 - Cloudflare Functions gratis: 100.000 pedidos por día y 50 llamadas externas por
-  pedido. El leaderboard hace como mucho 2 llamadas a Riot por jugador, así que
+  pedido. El leaderboard hace como mucho 3 llamadas a Riot por jugador (cuenta,
+  rango e ícono; casi siempre 1, porque el resto queda en caché), así que
   funciona bien hasta ~20 participantes.
 - La tabla se actualiza sola cada 5 minutos y Riot se consulta como mucho cada 2.
 

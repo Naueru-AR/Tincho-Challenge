@@ -1,6 +1,6 @@
 // GET /api/leaderboard
 // Devuelve a cada participante con su rango de SoloQ y su winrate.
-import { loadConfig, getAccount, getSoloQ, rankScore, json, isDemo } from "../../lib/riot.js";
+import { loadConfig, getAccount, getSoloQ, getProfileIcon, rankScore, json, isDemo } from "../../lib/riot.js";
 import { demoLeaderboard } from "../../lib/demo.js";
 import { trackLp } from "../../lib/lp.js";
 
@@ -19,7 +19,11 @@ export async function onRequestGet(context) {
         try {
           const acc = await getAccount(p.riotId, cfg, context.env);
           if (!acc) return { error: "No encontramos ese Riot ID. Revisá el nombre y el #tag." };
-          const e = await getSoloQ(acc.puuid, cfg, context.env);
+          // El ícono es un adorno: si falla, la fila se muestra igual con la inicial.
+          const [e, profileIconId] = await Promise.all([
+            getSoloQ(acc.puuid, cfg, context.env),
+            getProfileIcon(acc.puuid, cfg, context.env).catch(() => null),
+          ]);
           // Anotamos los LP de la última partida en segundo plano (no demora la respuesta).
           if (e) {
             const score = rankScore(e);
@@ -29,6 +33,7 @@ export async function onRequestGet(context) {
           }
           return {
             puuid: acc.puuid,
+            profileIconId,
             tier: e?.tier ?? null,
             rank: e?.rank ?? null,
             lp: e?.leaguePoints ?? 0,
@@ -42,6 +47,10 @@ export async function onRequestGet(context) {
     );
   }
 
+  // Corte entre brackets: desde este rango (inclusive) es High Elo; por debajo, Low Elo.
+  const cut = cfg.highEloFrom || { tier: "DIAMOND", rank: "III" };
+  const highEloScore = rankScore({ tier: cut.tier, rank: cut.rank || "IV", leaguePoints: 0 });
+
   const players = cfg.players
     .map((p, i) => {
       const r = rows[i];
@@ -50,17 +59,21 @@ export async function onRequestGet(context) {
       const wins = Math.max(0, (r.wins ?? 0) - base.wins);
       const losses = Math.max(0, (r.losses ?? 0) - base.losses);
       const [name, tag] = p.riotId.split("#");
+      const score = r.tier ? rankScore({ tier: r.tier, rank: r.rank, leaguePoints: r.lp }) : -1;
       return {
         alias: p.alias || name,
         riotId: p.riotId,
         opggUrl: `https://op.gg/lol/summoners/${cfg.opggRegion}/${encodeURIComponent(name)}-${encodeURIComponent(tag)}`,
         puuid: r.puuid ?? null,
+        profileIconId: r.profileIconId ?? null,
         tier: r.tier ?? null,
         rank: r.rank ?? null,
         lp: r.lp ?? 0,
         wins,
         losses,
-        score: r.tier ? rankScore({ tier: r.tier, rank: r.rank, leaguePoints: r.lp }) : -1,
+        score,
+        // Se puede fijar a mano con "bracket": "high" | "low" en participants.json.
+        bracket: p.bracket || (score < 0 ? null : score >= highEloScore ? "high" : "low"),
         error: r.error ?? null,
       };
     })
@@ -72,6 +85,7 @@ export async function onRequestGet(context) {
       edition: cfg.edition || null,
       start: cfg.start,
       end: cfg.end,
+      highEloFrom: cut,
       demo,
       updatedAt: new Date().toISOString(),
       players,

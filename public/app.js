@@ -1,21 +1,11 @@
-const TIER_ES = {
-  IRON: "Hierro", BRONZE: "Bronce", SILVER: "Plata", GOLD: "Oro", PLATINUM: "Platino",
-  EMERALD: "Esmeralda", DIAMOND: "Diamante", MASTER: "Maestro", GRANDMASTER: "Gran Maestro", CHALLENGER: "Retador",
-};
-const TIER_VAR = {
-  IRON: "iron", BRONZE: "bronze", SILVER: "silver", GOLD: "gold", PLATINUM: "platinum",
-  EMERALD: "emerald", DIAMOND: "diamond", MASTER: "master", GRANDMASTER: "master", CHALLENGER: "master",
-};
+import { $, esc, tierColor, isApex, TIER_ES, POD_DEFS, podiumHtml, avatarHtml, dd, ddReady, setBrand, tierIcon } from "./shared.js";
+
 const LADDER = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER"];
 const POS_ES = { TOP: "Top", JUNGLE: "Jungla", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Support" };
 
 const qs = new URLSearchParams(location.search);
 const demoParam = qs.has("demo") ? "?demo" : "";
-const $ = (id) => document.getElementById(id);
-const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-const tierColor = (tier) => `var(--t-${TIER_VAR[tier] || "iron"})`;
 const historyCache = new Map();
-let ddVersion = null;
 let lastData = null;
 
 /* ---------- utilidades de fecha ---------- */
@@ -90,29 +80,43 @@ function renderLadder(players) {
   `;
 }
 
+/* ---------- top 3 ---------- */
+// Los tres primeros de la tabla general. El podio por bracket (High y Low Elo)
+// está en podio.html y se habilita cuando termina el torneo.
+function renderTop3(players) {
+  $("top3").innerHTML = POD_DEFS + podiumHtml(players.filter((p) => p.score >= 0));
+}
+
 /* ---------- tabla ---------- */
 function renderBoard(players) {
   $("board").innerHTML = players.map((p, i) => {
     const games = p.wins + p.losses;
     const wr = games ? Math.round((p.wins / games) * 100) : null;
-    const isApex = ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(p.tier);
     const tier = p.tier
-      ? `<span class="tier" style="--tier-c:${tierColor(p.tier)}">${TIER_ES[p.tier]}${isApex ? "" : " " + p.rank}<small>${p.lp} LP</small></span>`
-      : `<span class="tier">Sin rango<small>${games ? "" : "0 partidas"}</small></span>`;
+      ? `<span class="tier" style="--tier-c:${tierColor(p.tier)}">
+           <img class="tier-icon" src="${tierIcon(p.tier)}" alt="" onerror="this.remove()">
+           <span>${TIER_ES[p.tier]}${isApex(p.tier) ? "" : " " + p.rank}<small>${p.lp} LP</small></span>
+         </span>`
+      : `<span class="tier"><span>Sin rango<small>${games ? "" : "0 partidas"}</small></span></span>`;
     return `
     <li class="row" data-i="${i}">
       <div class="row-main">
         <span class="pos">${i + 1}</span>
         <span class="who">
-          <button class="alias toggle" type="button" aria-expanded="false" aria-controls="h-${i}" ${p.puuid ? "" : "disabled"}>${esc(p.alias)}</button>
-          <span class="rid"><a href="${esc(p.opggUrl)}" target="_blank" rel="noopener">${esc(p.riotId)}</a></span>
-          ${p.error ? `<span class="row-error">${esc(p.error)}</span>` : ""}
+          ${avatarHtml(p)}
+          <span class="who-text">
+            <button class="alias toggle" type="button" aria-expanded="false" aria-controls="h-${i}" ${p.puuid ? "" : "disabled"}>${esc(p.alias)}</button>
+            <span class="rid"><a href="${esc(p.opggUrl)}" target="_blank" rel="noopener">${esc(p.riotId)}</a></span>
+            ${p.error ? `<span class="row-error">${esc(p.error)}</span>` : ""}
+          </span>
         </span>
         ${tier}
-        <span class="wl num"><span class="w">${p.wins}</span>–<span class="l">${p.losses}</span></span>
         <span class="wr">
-          <span class="wr-val">${wr === null ? "–" : wr + "%"}</span>
-          <span class="wr-bar" aria-hidden="true"><i style="width:${wr ?? 0}%"></i></span>
+          <span class="wr-top">
+            <b class="wr-val ${wr === null ? "" : wr >= 50 ? "up" : "down"}">${wr === null ? "–" : wr + "%"}</b>
+            <span class="wr-wl"><span class="w">${p.wins}V</span> · <span class="l">${p.losses}D</span></span>
+          </span>
+          <span class="wr-bar" aria-hidden="true">${games ? `<i class="w" style="flex:${p.wins}"></i><i class="l" style="flex:${p.losses}"></i>` : ""}</span>
         </span>
       </div>
       <div class="history" id="h-${i}" hidden></div>
@@ -136,7 +140,7 @@ async function toggleHistory(row) {
       const res = await fetch(`/api/player/${encodeURIComponent(p.puuid)}${demoParam}`);
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "No pudimos cargar el historial.");
-      historyCache.set(p.puuid, data.matches);
+      historyCache.set(p.puuid, data);
     } catch (e) {
       box.innerHTML = `<p class="history-msg">${esc(e.message)} Tocá de nuevo el jugador para reintentar.</p>`;
       btn.setAttribute("aria-expanded", "false"); row.classList.remove("open");
@@ -147,23 +151,46 @@ async function toggleHistory(row) {
   box.innerHTML = renderGames(historyCache.get(p.puuid));
 }
 
-function renderGames(matches) {
-  if (!matches.length) return `<p class="history-msg">Sin partidas de SoloQ desde que empezó el torneo.</p>`;
+const signed = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : "0");
+
+// Franja de resumen arriba del historial, todo sobre el día de hoy: a la izquierda,
+// cuántas partidas jugó sobre el límite diario; a la derecha, cómo le fue.
+function renderSummary(today, sum) {
+  const over = today ? today.played - today.limit : 0;
+  const flag = !today ? ""
+    : over > 0 ? `<span class="today-flag over">Límite superado por ${over}</span>`
+    : over === 0 ? `<span class="today-flag full">Llegó al límite</span>`
+    : `<span class="today-flag">Le quedan ${-over}</span>`;
+  return `
+    <div class="today${over > 0 ? " over" : ""}">
+      <div class="today-row">
+        ${today ? `<span class="today-title">Hoy</span>
+        <span class="today-count"><b>${today.played}</b> de ${today.limit} partidas</span>${flag}` : ""}
+        ${sum ? `<span class="today-sum">${sum}</span>` : ""}
+      </div>
+      ${today ? `<div class="today-meter" role="img" aria-label="${today.played} de ${today.limit} partidas jugadas hoy">${
+        Array.from({ length: today.limit }, (_, i) => `<i class="${i < today.played ? "on" : ""}"></i>`).join("")}</div>` : ""}
+    </div>`;
+}
+
+function renderGames({ matches, today }) {
+  if (!matches.length) return `${renderSummary(today, "")}<p class="history-msg">Hoy todavía no jugó partidas de SoloQ.</p>`;
   const played = matches.filter((m) => !m.remake); // las remakes no suman ni restan
   const w = played.filter((m) => m.win).length;
   const remakes = matches.length - played.length;
-  const img = (c) => ddVersion ? `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${encodeURIComponent(c)}.png` : "";
+  const img = (c) => dd.version ? `https://ddragon.leagueoflegends.com/cdn/${dd.version}/img/champion/${encodeURIComponent(c)}.png` : "";
   const known = matches.filter((m) => typeof m.lpChange === "number");
   const net = known.reduce((s, m) => s + m.lpChange, 0);
-  const signed = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : "0");
   const res = (m) => m.remake
     ? `<span class="g-res" title="Remake: no cuenta como victoria ni derrota.">Remake</span>`
     : typeof m.lpChange === "number"
     ? `<span class="g-res has-lp" title="${m.win ? "Victoria" : "Derrota"}"><b>${signed(m.lpChange)}</b><small>LP</small></span>`
     : `<span class="g-res" title="${m.win ? "Victoria" : "Derrota"}. Los LP de esta partida no quedaron registrados.">${m.win ? "V" : "D"}</span>`;
+  const sum = `<b class="up">${w}</b> ${w === 1 ? "ganada" : "ganadas"} · <b class="down">${played.length - w}</b> ${played.length - w === 1 ? "perdida" : "perdidas"} · <b>${remakes}</b> ${remakes === 1 ? "remake" : "remakes"}${
+    known.length ? ` · <b class="${net >= 0 ? "up" : "down"}">${signed(net)} LP</b>` : ""}`;
   return `
-    <p class="history-sum">Últimas ${matches.length} partidas del torneo: ${w} ganadas, ${played.length - w} perdidas${remakes ? `, ${remakes} remake${remakes > 1 ? "s" : ""}` : ""}${known.length ? ` · <span class="net ${net >= 0 ? "up" : "down"}">${signed(net)} LP</span>` : ""}</p>
-    <ul class="games">
+    ${renderSummary(today, sum)}
+    <ul class="games" aria-label="Partidas de hoy">
       ${matches.map((m) => `
         <li class="game ${m.remake ? "remake" : m.win ? "win" : "loss"}">
           <img src="${img(m.champion)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
@@ -181,10 +208,9 @@ function renderHeader(d) {
   const words = d.title.trim().split(/\s+/);
   const last = words.length > 1 ? words.pop() : "";
   $("title").innerHTML = `<span>${esc(words.join(" "))}</span>${last ? ` <span class="gold">${esc(last)}</span>` : ""}`;
-  $("brand-name").textContent = d.title;
+  setBrand(d.title);
   $("foot-name").textContent = d.title;
   const year = new Date(d.start).getFullYear();
-  $("brand-ed").textContent = d.edition || "";
   $("chip").textContent = d.edition ? `${d.edition} · ${year}` : String(year);
   $("ghost").textContent = year;
   $("when").textContent = `${rangeText(d.start, d.end)} de ${year}`;
@@ -196,6 +222,8 @@ function tick() {
   if (!lastData) return;
   const now = Date.now(), s = new Date(lastData.start).getTime(), e = new Date(lastData.end).getTime();
   const box = $("cd-boxes");
+  $("final-link").href = `podio.html${demoParam}`;
+  $("final-link").hidden = now < e; // el podio final aparece cuando termina el torneo
   if (now >= e) {
     $("cd-label").textContent = "Resultado final";
     box.innerHTML = `<p class="cd-done">Torneo terminado</p>`;
@@ -219,12 +247,14 @@ async function load() {
     const res = await fetch(`/api/leaderboard${demoParam}`);
     if (!res.ok) throw new Error(`El servidor respondió ${res.status}.`);
     lastData = await res.json();
+    await ddReady; // hace falta para los íconos de las cuentas
     historyCache.clear();
     renderHeader(lastData);
     $("updated").textContent = `Actualizado ${fmtTime.format(new Date(lastData.updatedAt))}`;
     $("demo").hidden = !lastData.demo;
-    renderLadder(lastData.players);
+    renderTop3(lastData.players);
     renderBoard(lastData.players);
+    renderLadder(lastData.players);
   } catch (e) {
     $("updated").textContent = `No se pudo actualizar: ${e.message}`;
     if (!lastData) $("board").innerHTML = `<li class="history-msg">No pudimos cargar la tabla. Revisá tu conexión y tocá Actualizar.</li>`;
@@ -242,7 +272,5 @@ $("refresh").addEventListener("click", load);
 let resizeT;
 addEventListener("resize", () => { clearTimeout(resizeT); resizeT = setTimeout(() => lastData && renderLadder(lastData.players), 150); });
 
-fetch("https://ddragon.leagueoflegends.com/api/versions.json")
-  .then((r) => r.json()).then((v) => (ddVersion = v[0])).catch(() => {});
 load();
 setInterval(load, 5 * 60 * 1000);
