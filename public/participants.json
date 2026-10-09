@@ -7,6 +7,11 @@
   "region": "americas",
   "opggRegion": "las",
   "players": [
-    { "alias": "Kairo", "riotId": "Kairo#SYS" }
+    { "alias": "Kairo", "riotId": "Kairo#SYS" },
+    { "alias": "Fusk4", "riotId": "Fusk4#Fmboy" },
+    { "alias": "Liand", "riotId": "Liand#liand" },
+    { "alias": "whos tao", "riotId": "whos tao#Las1" },
+    { "alias": "mauriciodavid", "riotId": "mauriciodavid#LAS" },
+    { "alias": "Snoo", "riotId": "Snoo#LAS" }
   ]
 }

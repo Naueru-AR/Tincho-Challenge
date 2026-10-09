@@ -59,8 +59,8 @@ Editá `public/participants.json`:
 ```
 
 - `alias` es el nombre que se muestra; `riotId` es el `Nombre#TAG` real.
-- Por ahora el único participante cargado es `Kairo#SYS` (LAS). Para sumar jugadores,
-  agregá una línea por cada uno en `players`. No uses Riot IDs inventados de relleno:
+- Por ahora hay 6 cuentas cargadas de prueba (`Kairo#SYS` y cinco amigos, todas de
+  LAS). Para sumar jugadores, agregá una línea por cada uno en `players`. No uses Riot IDs inventados de relleno:
   pueden coincidir con cuentas reales de otra gente.
 - `baseline` (opcional): las victorias/derrotas que tenía el jugador **el día que
   empezó el torneo**. Si lo cargás, el V–D y el winrate cuentan solo lo jugado
