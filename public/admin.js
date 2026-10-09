@@ -70,7 +70,15 @@ function render(done = true) {
 
 /* ---------- carga ---------- */
 // Primero se muestra lo que ya está guardado y después se le pide a Riot, jugador por
-// jugador, lo que falte. Cada pedido trae hasta 30 partidas, así que puede repetirse.
+// jugador, lo que falte. Cada pedido trae hasta 20 partidas y Riot permite 100 consultas
+// cada 2 minutos, así que la primera vez hay que ir de a poco, con pausas.
+const PAUSE = 30; // segundos entre tandas del mismo jugador
+const wait = async (seconds, label) => {
+  for (let s = seconds; s > 0; s--) {
+    $("adm-status").textContent = `${label} Sigue en ${s} s…`;
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+};
 async function load() {
   $("adm-status").textContent = "Cargando…";
   const data = await api();
@@ -85,14 +93,19 @@ async function load() {
 
   for (const p of data.players) {
     if (p.error) continue;
+    let stuck = 0;
     let last = Infinity;
-    for (let tries = 0; tries < 12; tries++) {
+    for (let tries = 0; tries < 80; tries++) {
       $("adm-status").textContent = `Consultando a Riot: ${p.alias}…`;
       const { player } = await api(`sync=${p.i}`);
       players.set(p.i, player);
       render(false);
-      if (player.error || !player.pending || player.pending >= last) break;
+      if (player.error || !player.pending) break;
+      // Si no avanza varias veces seguidas (y no es por el límite de Riot), se deja así.
+      stuck = player.pending >= last && !player.limited ? stuck + 1 : 0;
+      if (stuck >= 2) break;
       last = player.pending;
+      await wait(player.limited ? PAUSE * 2 : PAUSE, `Descargando el historial de ${p.alias}: faltan ${player.pending} partidas.`);
     }
   }
   render();

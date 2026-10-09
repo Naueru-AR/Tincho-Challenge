@@ -50,10 +50,10 @@ export async function onRequestGet(context) {
       const acc = await getAccount(p.riotId, cfg, env);
       if (!acc) return { ...base, error: "No encontramos ese Riot ID." };
       // Sin `sync` solo se lee lo guardado; `pending: null` avisa que falta consultar a Riot.
-      const { records, pending } = sync
+      const { records, pending, limited = false } = sync
         ? await syncRecords(acc.puuid, cfg, env)
         : { records: await loadRecords(acc.puuid, env), pending: null };
-      return { ...base, pending, ...alertsOnly(analyze(records, cfg, roster)) };
+      return { ...base, pending, limited, ...alertsOnly(analyze(records, cfg, roster)) };
     } catch (err) {
       return { ...base, error: err.status === 429 ? "Riot está limitando las consultas. Probá en un minuto." : err.message };
     }

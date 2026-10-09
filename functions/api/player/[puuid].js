@@ -1,12 +1,12 @@
 // GET /api/player/:puuid
 // Partidas de SoloQ que el jugador jugó HOY (hay un límite de partidas por día).
 // El historial se reinicia cada medianoche: no se muestran partidas de días anteriores.
-import { loadConfig, getMatchIds, getMatch, isRemake, tzOffset, json, isDemo } from "../../../lib/riot.js";
+import { loadConfig, getMatchIds, getMatch, isRemake, tzOffset, cachedResponse, json, isDemo } from "../../../lib/riot.js";
 import { demoMatches } from "../../../lib/demo.js";
 import { getLpChanges } from "../../../lib/lp.js";
 
 const DAY = 24 * 60 * 60 * 1000;
-const MAX_PER_DAY = 30; // cada partida es una llamada a Riot; el plan gratis de Cloudflare permite 50 por pedido
+const MAX_PER_DAY = 30; // cada partida nueva es una llamada a Riot; Cloudflare gratis permite 50 por pedido
 
 // Medianoche de hoy en la zona horaria del torneo.
 function startOfToday(cfg) {
@@ -28,6 +28,11 @@ export async function onRequestGet(context) {
 
   // Las partidas de hoy solo cuentan si el torneo ya empezó.
   const dayStart = Math.max(startOfToday(cfg), new Date(cfg.start).getTime());
+  // La respuesta queda en caché 2 minutos; las partidas ya vistas salen de KV, no de Riot.
+  return cachedResponse(context, () => today(puuid, cfg, limit, dayStart, context));
+}
+
+async function today(puuid, cfg, limit, dayStart, context) {
   try {
     const [ids, lpChanges] = await Promise.all([
       getMatchIds(puuid, cfg, context.env, MAX_PER_DAY, dayStart),
@@ -51,9 +56,10 @@ export async function onRequestGet(context) {
         endedAt: m.info.gameEndTimestamp,
       };
     });
-    return respond(matches, limit, 120);
+    return { response: respond(matches, limit, 120), cacheable: true };
   } catch (err) {
     const msg = err.status === 429 ? "Riot está limitando las consultas. Probá en un minuto." : err.message;
-    return new Response(JSON.stringify({ error: msg }), { status: 502, headers: { "Content-Type": "application/json" } });
+    const response = new Response(JSON.stringify({ error: msg }), { status: 502, headers: { "Content-Type": "application/json" } });
+    return { response, cacheable: false };
   }
 }

@@ -36,7 +36,7 @@ functions/api/        ← endpoints que corren en Cloudflare (esconden la API ke
   player/[puuid].js   GET /api/player/:puuid
   diag.js             GET /api/diag (revisa la API key sin mostrarla)
   admin.js            GET /api/admin (panel del organizador, pide clave)
-lib/riot.js           cliente de Riot con caché
+lib/riot.js           cliente de Riot con caché (KV + Cache API)
 lib/lp.js             LP por partida (fotos del rango en Cloudflare KV)
 lib/duo.js            posibles dúos y partidas por día de todo el torneo
 lib/demo.js           datos de ejemplo
@@ -44,7 +44,7 @@ lib/demo.js           datos de ejemplo
 
 La API key **nunca llega al navegador**: el navegador le pide a `/api/...` y la
 función de Cloudflare es la que habla con Riot. Además se cachean las respuestas
-(cuentas 7 días, rangos 2 min, partidas 30 días) para no pasarse del rate limit.
+para no pasarse de los límites (ver "Límites del plan gratis").
 
 ## Configurar el torneo
 
@@ -182,6 +182,8 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
   final, límite diario).
 - `backup-produccion-2026-10-09-b`: el sitio con el rediseño, antes de agregar el
   panel del organizador y el botón Admin.
+- `backup-produccion-2026-10-09-c`: con el panel del organizador, antes de pasar la
+  caché a KV (el panel fallaba con "Too many subrequests").
 
 Para ver los backups y volver a uno:
 
@@ -363,10 +365,15 @@ panel no abre.
 
 La clave se guarda solo en esa pestaña del navegador y viaja en cada pedido; el
 servidor la compara con el secret y no responde nada sin ella. Al abrir el panel
-se le piden a Riot las partidas del torneo de cada jugador, de a 30 por pedido, y
+se le piden a Riot las partidas del torneo de cada jugador, de a 20 por tanda, y
 se guarda en KV con quién jugó cada una (`lib/duo.js`), así las visitas siguientes
-solo traen las partidas nuevas. La primera vez puede tardar unos segundos por
-jugador.
+solo traen las partidas nuevas.
+
+**La primera vez tarda varios minutos**: Riot permite 100 consultas cada 2 minutos,
+así que el panel descarga el historial con pausas de 30 segundos entre tandas y va
+mostrando cuántas partidas faltan. Hay que dejar la pestaña abierta hasta que
+termine; si se cierra, la próxima vez sigue desde donde quedó. Mientras dura esa
+descarga, la tabla pública puede mostrar algún "Riot está limitando las consultas".
 
 Para probarlo en tu computadora, `ADMIN_KEY` va en `.dev.vars` (hay un ejemplo en
 `.dev.vars.example`).
@@ -418,11 +425,30 @@ Después en el Worker → **Settings → Trigger events → Add → Cron trigger
 
 ## Límites del plan gratis
 
-- Cloudflare Functions gratis: 100.000 pedidos por día y 50 llamadas externas por
-  pedido. El leaderboard hace como mucho 3 llamadas a Riot por jugador (cuenta,
-  rango e ícono; casi siempre 1, porque el resto queda en caché), así que
-  funciona bien hasta ~20 participantes.
-- La tabla se actualiza sola cada 5 minutos y Riot se consulta como mucho cada 2.
+Hay tres topes que condicionan cómo está hecho el sitio:
+
+| Tope | Cuánto | Cómo se respeta |
+|---|---|---|
+| Cloudflare: consultas por pedido | 50, contando cada `fetch` a Riot **y cada lectura o escritura de la Cache API** | La Cache API se usa una sola vez por pedido (para la respuesta entera); lo demás va a KV, que tiene su propio tope de 1.000 |
+| Riot (key personal) | 100 consultas cada 2 minutos | La tabla se recalcula como mucho cada 2 minutos; el panel descarga el historial de a 20 partidas, con pausas |
+| Cloudflare KV | 100.000 lecturas y 1.000 escrituras por día | Solo se guarda lo que dura: cuentas, íconos, partidas terminadas y los LP |
+
+Qué se guarda y cuánto dura:
+
+- **Respuesta de la tabla y del historial**: 2 minutos (Cache API).
+- **Cuenta → PUUID**: 7 días (KV).
+- **Ícono de la cuenta**: 24 horas (KV).
+- **Partidas terminadas**: 30 días (KV), achicadas a los campos que usa el sitio.
+- **Rango y LP actuales**: no se guardan por separado; se piden a Riot en cada
+  recálculo de la tabla (1 consulta por jugador).
+
+Con esto, recalcular la tabla cuesta 1 consulta a Riot por jugador (más 2 por
+jugador la primera vez, por la cuenta y el ícono), así que entra cómodo hasta unos
+**20 participantes**. La primera vez con muchos jugadores, algunos íconos pueden
+aparecer recién en la segunda actualización.
+
+Si un día se agotan las escrituras de KV, el sitio sigue funcionando, solo que sin
+guardar caché nueva hasta el día siguiente.
 
 ## Créditos
 
