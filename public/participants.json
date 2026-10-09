@@ -1,0 +1,19 @@
+{
+  "title": "Tincho Challenge",
+  "edition": "Edición I",
+  "start": "2026-10-15T00:00:00-03:00",
+  "end": "2026-11-01T00:00:00-03:00",
+  "platform": "la2",
+  "region": "americas",
+  "opggRegion": "las",
+  "players": [
+    { "alias": "Tomi", "riotId": "Jugador1#LAS" },
+    { "alias": "Nacho", "riotId": "Jugador2#LAS" },
+    { "alias": "Fede", "riotId": "Jugador3#LAS" },
+    { "alias": "Cami", "riotId": "Jugador4#LAS" },
+    { "alias": "Lucho", "riotId": "Jugador5#LAS" },
+    { "alias": "Juli", "riotId": "Jugador6#LAS" },
+    { "alias": "Mati", "riotId": "Jugador7#LAS" },
+    { "alias": "Santi", "riotId": "Jugador8#LAS" }
+  ]
+}
