@@ -45,17 +45,9 @@ function currentHtml(s) {
     </li>`;
 }
 
-// Histórico: sospechas altas y días en que se pasó del banco, con la fecha de detección.
+// Histórico: sospechas altas de dúo, con la fecha en que se detectaron.
 function historyHtml(h) {
   const when = `<span class="suspect-date">Detectado el ${fmtWhen.format(new Date(h.at))}</span>`;
-  if (h.kind === "limit") {
-    return `
-      <li class="suspect alto">
-        <span class="suspect-who">Banco de partidas superado <span class="tag hot">+${h.over}</span></span>
-        <span class="suspect-why">Al ${day(h.date)} llevaba <b>${h.played} partidas</b> jugadas, con <b>${h.allowed ?? "?"}</b> habilitadas hasta ese día.</span>
-        ${when}
-      </li>`;
-  }
   return `
     <li class="suspect alto">
       ${who(h, `<span class="tag hot">Posible dúo</span>`)}
@@ -65,7 +57,17 @@ function historyHtml(h) {
     </li>`;
 }
 
-const hasAlerts = (p) => Boolean(p.error || p.current?.length || p.history?.length);
+// Sin banco de partidas: lo agotó (le quedan 0) o se pasó (lleva más de las habilitadas).
+function bankHtml(b) {
+  const over = -b.left;
+  return `
+    <li class="suspect ${over > 0 ? "alto" : "medio"}">
+      <span class="suspect-who">${over > 0 ? "Se pasó del banco" : "Banco agotado"} <span class="tag ${over > 0 ? "hot" : "warn"}">${over > 0 ? `+${over}` : "0 disponibles"}</span></span>
+      <span class="suspect-why">Lleva <b>${b.played} partidas</b> jugadas en el torneo, con <b>${b.allowed}</b> habilitadas hasta hoy.</span>
+    </li>`;
+}
+
+const hasAlerts = (p) => Boolean(p.error || p.current?.length || p.history?.length || p.bank);
 
 function cardHtml(p) {
   if (p.error) return `<article class="adm-card flagged"><h3>${esc(p.alias)} <small>${esc(p.riotId)}</small></h3><p class="adm-err">${esc(p.error)}</p></article>`;
@@ -78,6 +80,9 @@ function cardHtml(p) {
       ${p.history.length ? `
         <h4>Histórico</h4>
         <ul class="suspects">${p.history.map(historyHtml).join("")}</ul>` : ""}
+      ${p.bank ? `
+        <h4>Banco de partidas</h4>
+        <ul class="suspects">${bankHtml(p.bank)}</ul>` : ""}
     </article>`;
 }
 
@@ -87,16 +92,16 @@ function render(data) {
   const list = data.players;
   const flagged = list.filter(hasAlerts);
   const now = list.reduce((n, p) => n + (p.current?.length || 0), 0);
-  const duos = list.reduce((n, p) => n + (p.history?.filter((h) => h.kind === "duo").length || 0), 0);
-  const days = list.reduce((n, p) => n + (p.history?.filter((h) => h.kind === "limit").length || 0), 0);
+  const duos = list.reduce((n, p) => n + (p.history?.length || 0), 0);
+  const noBank = list.filter((p) => p.bank).length;
   const box = (n, one, many) => `<div class="${n ? "hot" : ""}"><b>${n}</b><span>${n === 1 ? one : many}</span></div>`;
   $("adm-summary").innerHTML =
     box(now, "sospecha vigente de dúo", "sospechas vigentes de dúo") +
     box(duos, "sospecha alta en el histórico", "sospechas altas en el histórico") +
-    box(days, "día con el banco superado", "días con el banco superado");
+    box(noBank, "jugador sin banco de partidas", "jugadores sin banco de partidas");
   $("adm-cards").innerHTML = flagged.length
     ? flagged.map(cardHtml).join("")
-    : `<p class="adm-clear">Sin alertas: se revisaron ${list.length} jugadores y ninguno tiene posibles dúos ni se pasó de su banco de partidas.</p>`;
+    : `<p class="adm-clear">Sin alertas: se revisaron ${list.length} jugadores y ninguno tiene posibles dúos ni se quedó sin banco de partidas.</p>`;
 
   const checked = list.map((p) => p.checkedAt).filter(Boolean).sort();
   const pending = list.filter((p) => !p.error && !p.checkedAt).length;

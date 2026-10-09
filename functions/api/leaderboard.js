@@ -1,7 +1,7 @@
 // GET /api/leaderboard
 // Devuelve a cada participante con su rango de SoloQ y su winrate.
 import { loadConfig, getAccount, getSoloQ, getProfileIcon, rankScore, cachedResponse, recall, remember, withBudget, json, isDemo } from "../../lib/riot.js";
-import { demoLeaderboard } from "../../lib/demo.js";
+import { demoLeaderboard, demoPlayers } from "../../lib/demo.js";
 import { trackLp } from "../../lib/lp.js";
 import { watchPlayer } from "../../lib/duo.js";
 
@@ -112,7 +112,8 @@ const sorted = (players) => [...players].sort((a, b) => b.score - a.score || b.w
 export async function onRequestGet(context) {
   const cfg = await loadConfig(context);
   if (isDemo(context)) {
-    const data = body(cfg, demoLeaderboard(cfg), true);
+    const sample = { ...cfg, players: demoPlayers(cfg) };
+    const data = body(sample, demoLeaderboard(sample), true);
     return json({ ...data, players: sorted(data.players) }, 0);
   }
 

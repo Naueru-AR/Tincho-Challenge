@@ -105,6 +105,8 @@ Editá `public/participants.json`:
 Cada vez que hagas push (por ejemplo, para cambiar participantes) se republica sola.
 
 Sin `RIOT_API_KEY`, o agregando `?demo` a la URL, la página muestra datos de ejemplo.
+Si la lista de participantes está vacía, el modo de ejemplo usa seis jugadores
+inventados ("Ejemplo Uno"…), para poder ver igual cómo queda todo.
 
 ### Si la tabla muestra "Riot respondió 401" o 403
 
@@ -193,6 +195,9 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
 - `backup-produccion-2026-10-09-e`: con el ícono de la pestaña, las seis cuentas de
   prueba y la página de Premios, antes de pasar a Reglas, banco de partidas y
   fechas reales.
+- `backup-produccion-2026-10-09-f`: con Reglas, banco de partidas, fechas reales y la
+  lista de participantes vacía, antes de cambiar el panel a "jugadores sin banco"
+  y el texto del inicio.
 
 Para ver los backups y volver a uno:
 
@@ -371,13 +376,22 @@ de la barra superior (antes ahí estaba "Actualizar"; la tabla se sigue
 actualizando sola cada 5 minutos). Sirve para controlar las reglas del torneo.
 **Solo muestra a los jugadores que tienen alguna alerta**; si nadie tiene, lo dice.
 Abre al instante, porque no le consulta nada a Riot: lee lo que el sitio fue
-guardando solo (ver "Cómo funciona"). Para cada jugador con alertas hay dos partes:
+guardando solo (ver "Cómo funciona"). Para cada jugador con alertas puede haber
+hasta tres partes:
 
 - **Ahora**: las sospechas de dúo vigentes, calculadas sobre sus **últimas 12
   partidas**. Incluye las de nivel medio y alto.
-- **Histórico**: las sospechas **altas** y los días en que se pasó del banco, cada
-  una con la fecha y hora en que se detectó. Quedan guardadas aunque el jugador
-  siga jugando y esas partidas salgan de las últimas 12.
+- **Histórico**: las sospechas **altas** de dúo, cada una con la fecha y hora en
+  que se detectó. Quedan guardadas aunque el jugador siga jugando y esas partidas
+  salgan de las últimas 12.
+- **Banco de partidas**: aparece solo si el jugador **se quedó sin banco**, o sea,
+  si ya usó todas las partidas habilitadas hasta hoy ("Banco agotado") o jugó de
+  más ("Se pasó del banco", con cuántas). Muestra cuántas lleva jugadas en el
+  torneo y cuántas tenía habilitadas. Es el estado de hoy: al día siguiente se le
+  suman 8 y, si con eso vuelve a tener partidas, deja de aparecer.
+
+Arriba, tres contadores resumen todo: sospechas vigentes, sospechas altas en el
+histórico y **jugadores sin banco de partidas**.
 
 Las reglas:
 
@@ -398,10 +412,10 @@ Las reglas:
   el 9 % de las veces, 4 veces el 4 % y 5 veces el 1,7 %. Sigue siendo una
   **alerta para revisar, no una prueba**: en elo alto hay poca gente en cola y se
   repiten compañeros. (En Maestro o más, además, Riot no permite hacer cola en dúo.)
-- **Banco de partidas superado**: los días en que el jugador llevaba jugadas más
-  partidas de las habilitadas hasta ese día, con cuántas se pasó. Se cuenta
-  partida por partida a medida que las juega, así que no depende de la ventana
-  de 12. En los últimos días, con el cupo liberado, ya no se registra.
+- **Sin banco de partidas**: lo que lleva jugado en el torneo (sin remakes) alcanzó
+  o superó lo habilitado hasta hoy. Se cuenta partida por partida a medida que
+  las juega, así que no depende de la ventana de 12. Antes de empezar el torneo,
+  en los últimos días (cupo liberado) y una vez terminado, no aparece nadie.
 
 Las remakes no cuentan ni cortan una racha. Los umbrales se cambian en
 `participants.json`:
@@ -432,8 +446,8 @@ para que alcance aunque haya 20 jugadores:
    por jugador, si jugó algo nuevo. **Si no jugó, no se le consulta nada a Riot.**
 2. Si jugó, se trae solo la partida nueva (2 consultas) y se vuelve a analizar la
    ventana de sus últimas 12 partidas. Nunca se revisa el historial completo.
-3. Las sospechas altas y los días en que se pasó del banco se anotan en el
-   histórico.
+3. Las sospechas altas se anotan en el histórico, y se actualiza la cuenta de
+   partidas por día, de donde sale el banco.
 
 Por cada pasada se gastan como mucho 12 consultas en esto; si muchos jugadores
 terminan una partida a la vez, a los que no les toca se los revisa en la pasada

@@ -5,9 +5,11 @@
 //
 // No le consulta nada a Riot: lee lo que fue guardando lib/duo.js cada vez que se
 // recalculó la tabla. Por eso abre al instante aunque haya muchos jugadores.
-import { loadConfig, getAccount, isDemo } from "../../lib/riot.js";
+import { loadConfig, getAccount, isDemo, tzOffset } from "../../lib/riot.js";
 import { WINDOW, adminView, applyRecords, emptyState, forgetOthers, loadState } from "../../lib/duo.js";
-import { demoRecords } from "../../lib/demo.js";
+import { demoPlayers, demoRecords } from "../../lib/demo.js";
+
+const DAY = 24 * 60 * 60 * 1000;
 
 const reply = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -29,8 +31,13 @@ export async function onRequestGet(context) {
   if (!env.ADMIN_KEY) return reply({ error: "El panel no está configurado: falta el secret ADMIN_KEY en Cloudflare." }, 503);
   if (!(await sameKey(request.headers.get("X-Admin-Key") || "", env.ADMIN_KEY))) return reply({ error: "Clave incorrecta." }, 401);
 
-  const cfg = await loadConfig(context);
+  let cfg = await loadConfig(context);
   const demo = isDemo(context);
+  // El ejemplo simula un torneo que empezó anteayer, así siempre tiene algo para mostrar.
+  if (demo) {
+    const start = new Date(Math.floor((Date.now() + tzOffset(cfg)) / DAY) * DAY - tzOffset(cfg) - 2 * DAY);
+    cfg = { ...cfg, players: demoPlayers(cfg), start: start.toISOString(), end: new Date(start.getTime() + 31 * DAY).toISOString() };
+  }
   const roster = new Map(cfg.players.map((p) => [p.riotId.toLowerCase(), p.alias || p.riotId.split("#")[0]]));
 
   const puuids = new Set();
@@ -48,12 +55,12 @@ export async function onRequestGet(context) {
           // En el ejemplo las partidas entran de a una, como pasaría en el torneo.
           const state = emptyState();
           for (const r of demoRecords(i)) applyRecords(state, [r], cfg, roster, r.t + 30 * 60 * 1000);
-          return { ...base, ...adminView(state) };
+          return { ...base, ...adminView(state, cfg) };
         }
         const acc = await getAccount(p.riotId, cfg, env); // en caché 7 días
         if (!acc) return { ...base, error: "No encontramos ese Riot ID." };
         puuids.add(acc.puuid);
-        return { ...base, ...adminView(await loadState(acc.puuid, env)) };
+        return { ...base, ...adminView(await loadState(acc.puuid, env), cfg) };
       } catch (err) {
         return { ...base, error: err.status === 429 ? "Riot está limitando las consultas. Probá en un minuto." : err.message };
       }
