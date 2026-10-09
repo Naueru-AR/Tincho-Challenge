@@ -2,6 +2,7 @@
 // Historial de partidas SoloQ del jugador desde que empezó el torneo.
 import { loadConfig, getMatchIds, getMatch, json, isDemo } from "../../../lib/riot.js";
 import { demoMatches } from "../../../lib/demo.js";
+import { getLpChanges } from "../../../lib/lp.js";
 
 export async function onRequestGet(context) {
   const puuid = context.params.puuid;
@@ -14,13 +15,17 @@ export async function onRequestGet(context) {
   // y se mantiene dentro del límite gratuito de Cloudflare (50 subrequests por pedido).
   try {
     const ids = await getMatchIds(puuid, cfg, context.env, 10);
-    const matches = await Promise.all(ids.map((id) => getMatch(id, cfg, context.env)));
+    const [matches, lpChanges] = await Promise.all([
+      Promise.all(ids.map((id) => getMatch(id, cfg, context.env))),
+      getLpChanges(puuid, context.env),
+    ]);
     const out = matches
       .filter(Boolean)
       .map((m) => {
         const me = m.info.participants.find((p) => p.puuid === puuid);
         return {
           id: m.metadata.matchId,
+          lpChange: lpChanges[m.metadata.matchId] ?? null, // null = no lo tenemos registrado
           win: me.win,
           champion: me.championName,
           position: me.teamPosition,

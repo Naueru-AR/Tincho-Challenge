@@ -2,6 +2,7 @@
 // Devuelve a cada participante con su rango de SoloQ y su winrate.
 import { loadConfig, getAccount, getSoloQ, rankScore, json, isDemo } from "../../lib/riot.js";
 import { demoLeaderboard } from "../../lib/demo.js";
+import { trackLp } from "../../lib/lp.js";
 
 export async function onRequestGet(context) {
   const cfg = await loadConfig(context);
@@ -19,6 +20,13 @@ export async function onRequestGet(context) {
           const acc = await getAccount(p.riotId, cfg, context.env);
           if (!acc) return { error: "No encontramos ese Riot ID. Revisá el nombre y el #tag." };
           const e = await getSoloQ(acc.puuid, cfg, context.env);
+          // Anotamos los LP de la última partida en segundo plano (no demora la respuesta).
+          if (e) {
+            const score = rankScore(e);
+            context.waitUntil(
+              trackLp(acc.puuid, e, score, cfg, context.env).catch((err) => console.log("trackLp:", err.message))
+            );
+          }
           return {
             puuid: acc.puuid,
             tier: e?.tier ?? null,

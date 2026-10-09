@@ -180,7 +180,13 @@ h2 { margin: 0 0 1.2rem; font: 800 clamp(2rem, 5vw, 2.6rem)/1 var(--display); te
 .g-meta { display: block; color: var(--dim); font-size: .82rem; }
 .g-kda { font: 800 1.15rem/1 var(--display); text-align: right; font-variant-numeric: tabular-nums; }
 .g-kda small { display: block; font: 500 .78rem var(--text); color: var(--dim); margin-top: .2rem; }
-.g-res { font: 800 .85rem var(--display); letter-spacing: .08em; color: var(--res-c); width: 2.2rem; text-align: center; }
+.g-res { font: 800 .85rem var(--display); letter-spacing: .08em; color: var(--res-c); min-width: 3.4rem; text-align: center; }
+.g-res.has-lp { display: flex; flex-direction: column; align-items: center; line-height: 1; letter-spacing: 0; }
+.g-res.has-lp b { font: 800 1.35rem/1 var(--display); font-variant-numeric: tabular-nums; }
+.g-res.has-lp small { font: 700 .68rem var(--display); letter-spacing: .1em; opacity: .75; margin-top: .15rem; }
+.history-sum .net { font-weight: 700; }
+.history-sum .net.up { color: var(--win); }
+.history-sum .net.down { color: var(--loss); }
 
 .skeleton { height: 4.6rem; border-bottom: 1px solid var(--line); background: linear-gradient(90deg, transparent, rgba(255,255,255,.04), transparent) 0 0 / 200% 100%; animation: shimmer 1.4s infinite; }
 @keyframes shimmer { to { background-position: -200% 0; } }
@@ -210,8 +216,8 @@ h2 { margin: 0 0 1.2rem; font: 800 clamp(2rem, 5vw, 2.6rem)/1 var(--display); te
   .wr-bar { display: none; }
   .wr-val { width: auto; text-align: right; }
   .history { padding: 0 .8rem 1rem; }
-  .game { grid-template-columns: 2.3rem minmax(0, 1fr) auto; }
-  .g-res { display: none; }
+  .game { gap: .7rem; }
+  .g-res { min-width: 2.8rem; }
   .marker-name { font-size: .8rem; padding: .2rem .4rem; }
   .band-labels span { font-size: .72rem; }
   .cd-boxes b { font-size: 2rem; }

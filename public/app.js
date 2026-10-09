@@ -46,11 +46,11 @@ function renderLadder(players) {
     return;
   }
 
-  // Mostramos solo los tiers donde hay jugadores (mínimo 3) para que se lea bien.
+  // La escalera siempre llega hasta Maestro+ (la meta del torneo) y arranca
+  // en el tier del jugador más bajo, con un mínimo de 3 tiers para que se lea bien.
   const scores = ranked.map((p) => p.score);
-  let lo = Math.floor(Math.min(...scores) / 400);
-  let hi = Math.min(8, Math.floor(Math.max(...scores) / 400) + 1);
-  while (hi - lo < 3) { if (lo > 0) lo--; else if (hi < 8) hi++; else break; }
+  const hi = 8;
+  const lo = Math.min(Math.floor(Math.min(...scores) / 400), hi - 3);
   const tiers = LADDER.slice(lo, hi);
   const pct = (score) => ((Math.min(score, hi * 400 - 1) - lo * 400) / ((hi - lo) * 400)) * 100;
 
@@ -151,8 +151,14 @@ function renderGames(matches) {
   if (!matches.length) return `<p class="history-msg">Sin partidas de SoloQ desde que empezó el torneo.</p>`;
   const w = matches.filter((m) => m.win).length;
   const img = (c) => ddVersion ? `https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/champion/${encodeURIComponent(c)}.png` : "";
+  const known = matches.filter((m) => typeof m.lpChange === "number");
+  const net = known.reduce((s, m) => s + m.lpChange, 0);
+  const signed = (n) => (n > 0 ? `+${n}` : n < 0 ? `−${Math.abs(n)}` : "0");
+  const res = (m) => typeof m.lpChange === "number"
+    ? `<span class="g-res has-lp" title="${m.win ? "Victoria" : "Derrota"}"><b>${signed(m.lpChange)}</b><small>LP</small></span>`
+    : `<span class="g-res" title="${m.win ? "Victoria" : "Derrota"}. Los LP de esta partida no quedaron registrados.">${m.win ? "V" : "D"}</span>`;
   return `
-    <p class="history-sum">Últimas ${matches.length} partidas del torneo: ${w} ganadas, ${matches.length - w} perdidas</p>
+    <p class="history-sum">Últimas ${matches.length} partidas del torneo: ${w} ganadas, ${matches.length - w} perdidas${known.length ? ` · <span class="net ${net >= 0 ? "up" : "down"}">${signed(net)} LP</span>` : ""}</p>
     <ul class="games">
       ${matches.map((m) => `
         <li class="game ${m.win ? "win" : "loss"}">
@@ -160,7 +166,7 @@ function renderGames(matches) {
           <span><span class="g-champ">${esc(m.champion)}</span>
             <span class="g-meta">${POS_ES[m.position] || "—"}, ${mmss(m.duration)}, ${ago(m.endedAt)}</span></span>
           <span class="g-kda">${m.kills}/${m.deaths}/${m.assists}<small>${m.cs} CS</small></span>
-          <span class="g-res">${m.win ? "V" : "D"}</span>
+          ${res(m)}
         </li>`).join("")}
     </ul>`;
 }

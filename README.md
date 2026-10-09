@@ -28,6 +28,7 @@ functions/api/        ← endpoints que corren en Cloudflare (esconden la API ke
   leaderboard.js      GET /api/leaderboard
   player/[puuid].js   GET /api/player/:puuid
 lib/riot.js           cliente de Riot con caché
+lib/lp.js             LP por partida (fotos del rango en Cloudflare KV)
 lib/demo.js           datos de ejemplo
 ```
 
@@ -138,6 +139,41 @@ sesión en GitHub; después queda guardado.
 
 No se suben al repo (están en el `.gitignore`): `node_modules/`, `.wrangler/`,
 `.dev.vars` y `.claude/` (configuración local de Claude Code).
+
+## LP por partida (+25 / −18)
+
+La API de Riot **no informa cuántos LP dio cada partida**. Se calculan como lo hace
+OP.GG: cada vez que se consulta la tabla se guarda una "foto" del rango de cada
+jugador en **Cloudflare KV** (gratis) y, cuando aparece una partida nueva, la
+diferencia entre las dos fotos son los LP de esa partida (`lib/lp.js`).
+
+- Solo se registran partidas jugadas **después** de activar esto.
+- Si alguien juega 2 partidas seguidas sin que nadie consulte la tabla, no se puede
+  saber cuánto dio cada una y esas quedan sin LP (se muestra V o D). Por eso conviene
+  un cron que consulte la tabla cada 5 minutos (ver abajo).
+- Sin KV configurado la página funciona igual, solo que sin LP por partida.
+
+### Activar KV
+1. En Cloudflare → **Storage & Databases → KV → Create** → nombre `tincho-lp`.
+   Copiá el **ID** del namespace.
+2. Agregá esto al final de `wrangler.toml` (con tu ID) y hacé push:
+   ```toml
+   [[kv_namespaces]]
+   binding = "LP"
+   id = "EL-ID-DEL-NAMESPACE"
+   ```
+
+### Cron cada 5 minutos (gratis)
+En Cloudflare → **Workers & Pages → Create → Worker** → "Hello World" → Deploy.
+Editá el código, pegá esto (con tu URL) y deploy:
+```js
+export default {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(fetch("https://TU-SITIO.pages.dev/api/leaderboard"));
+  },
+};
+```
+Después en el Worker → **Settings → Trigger events → Add → Cron trigger** → `*/5 * * * *`.
 
 ## Límites del plan gratis
 
