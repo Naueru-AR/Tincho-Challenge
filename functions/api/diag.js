@@ -29,7 +29,7 @@ export async function onRequestGet(context) {
   out.lpBinding = Boolean(context.env.LP);
   if (out.lpBinding) {
     out.lpSnapshots = (await context.env.LP.list({ prefix: "snap:" })).keys.length;
-    out.lpPlayersWithMatches = (await context.env.LP.list({ prefix: "lp:" })).keys.length;
+    out.duoWatched = (await context.env.LP.list({ prefix: "watch:" })).keys.length; // jugadores revisados por el panel
   }
 
   return new Response(JSON.stringify(out, null, 2), {

@@ -439,3 +439,4 @@ a.avatar:hover, a.avatar:focus-visible {
 .adm-clear { margin: 0; padding: 1.2rem; border: 1px solid color-mix(in srgb, var(--win) 40%, transparent); border-radius: 14px; color: var(--win); background: color-mix(in srgb, var(--win) 6%, transparent); }
 .tag.warn { color: #1A1305; background: var(--gold); border-color: var(--gold); }
 .suspect.medio { border-left-color: var(--gold); background: color-mix(in srgb, var(--gold) 7%, transparent); }
+.suspect-date { color: var(--dim); font-size: .78rem; }

@@ -1,17 +1,13 @@
-// GET /api/admin            → resumen de todos los jugadores con lo que ya está guardado
-// GET /api/admin?sync=<n>   → trae de Riot las partidas que faltan del jugador n y lo vuelve a analizar
+// GET /api/admin → sospechas de dúo y días con el límite superado, por jugador.
 //
 // Panel privado del organizador. Solo responde si el pedido trae la clave ADMIN_KEY
 // (un secret de Cloudflare) en el encabezado X-Admin-Key.
+//
+// No le consulta nada a Riot: lee lo que fue guardando lib/duo.js cada vez que se
+// recalculó la tabla. Por eso abre al instante aunque haya muchos jugadores.
 import { loadConfig, getAccount, isDemo } from "../../lib/riot.js";
-import { analyze, loadRecords, syncRecords } from "../../lib/duo.js";
+import { WINDOW, adminView, applyRecords, emptyState, loadState } from "../../lib/duo.js";
 import { demoRecords } from "../../lib/demo.js";
-
-// Al navegador solo le mandamos las alertas: los sospechosos de dúo y los días pasados
-// del límite. De un jugador sin alertas no viaja ningún detalle.
-function alertsOnly(a) {
-  return { limit: a.limit, suspects: a.suspects, overDays: a.days.filter((d) => d.over > 0) };
-}
 
 const reply = (data, status = 200) =>
   new Response(JSON.stringify(data), {
@@ -37,40 +33,37 @@ export async function onRequestGet(context) {
   const demo = isDemo(context);
   const roster = new Map(cfg.players.map((p) => [p.riotId.toLowerCase(), p.alias || p.riotId.split("#")[0]]));
 
-  const entry = async (p, i, sync) => {
-    const [name, tag] = p.riotId.split("#");
-    const base = {
-      i,
-      alias: p.alias || name,
-      riotId: p.riotId,
-      opggUrl: `https://op.gg/lol/summoners/${cfg.opggRegion}/${encodeURIComponent(name)}-${encodeURIComponent(tag)}`,
-    };
-    try {
-      if (demo) return { ...base, pending: 0, ...alertsOnly(analyze(demoRecords(i), cfg, roster)) };
-      const acc = await getAccount(p.riotId, cfg, env);
-      if (!acc) return { ...base, error: "No encontramos ese Riot ID." };
-      // Sin `sync` solo se lee lo guardado; `pending: null` avisa que falta consultar a Riot.
-      const { records, pending, limited = false } = sync
-        ? await syncRecords(acc.puuid, cfg, env)
-        : { records: await loadRecords(acc.puuid, env), pending: null };
-      return { ...base, pending, limited, ...alertsOnly(analyze(records, cfg, roster)) };
-    } catch (err) {
-      return { ...base, error: err.status === 429 ? "Riot está limitando las consultas. Probá en un minuto." : err.message };
-    }
-  };
-
-  const sync = new URL(request.url).searchParams.get("sync");
-  if (sync !== null) {
-    const i = Number(sync);
-    const p = cfg.players[i];
-    if (!Number.isInteger(i) || !p) return reply({ error: "Jugador inexistente." }, 400);
-    return reply({ player: await entry(p, i, true) });
-  }
+  const players = await Promise.all(
+    cfg.players.map(async (p, i) => {
+      const [name, tag] = p.riotId.split("#");
+      const base = {
+        i,
+        alias: p.alias || name,
+        riotId: p.riotId,
+        opggUrl: `https://op.gg/lol/summoners/${cfg.opggRegion}/${encodeURIComponent(name)}-${encodeURIComponent(tag)}`,
+      };
+      try {
+        if (demo) {
+          // En el ejemplo las partidas entran de a una, como pasaría en el torneo.
+          const state = emptyState();
+          for (const r of demoRecords(i)) applyRecords(state, [r], cfg, roster, r.t + 30 * 60 * 1000);
+          return { ...base, ...adminView(state) };
+        }
+        const acc = await getAccount(p.riotId, cfg, env); // en caché 7 días
+        if (!acc) return { ...base, error: "No encontramos ese Riot ID." };
+        return { ...base, ...adminView(await loadState(acc.puuid, env)) };
+      } catch (err) {
+        return { ...base, error: err.status === 429 ? "Riot está limitando las consultas. Probá en un minuto." : err.message };
+      }
+    })
+  );
 
   return reply({
     title: cfg.title,
     demo,
-    storage: Boolean(env.LP), // sin KV no queda nada guardado entre visitas
-    players: await Promise.all(cfg.players.map((p, i) => entry(p, i, false))),
+    storage: Boolean(env.LP), // sin KV no se puede guardar nada y el panel queda vacío
+    window: WINDOW,
+    limit: cfg.dailyLimit ?? 12,
+    players,
   });
 }

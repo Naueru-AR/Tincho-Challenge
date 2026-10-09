@@ -38,7 +38,7 @@ functions/api/        ← endpoints que corren en Cloudflare (esconden la API ke
   admin.js            GET /api/admin (panel del organizador, pide clave)
 lib/riot.js           cliente de Riot con caché (KV + Cache API)
 lib/lp.js             LP por partida (fotos del rango en Cloudflare KV)
-lib/duo.js            posibles dúos y partidas por día de todo el torneo
+lib/duo.js            posibles dúos (últimas 12 partidas) e histórico de alertas
 lib/demo.js           datos de ejemplo
 ```
 
@@ -319,10 +319,18 @@ Cómo se cuenta:
 
 En `/admin` hay un panel que pide una clave. Se entra con el botón **Admin**
 de la barra superior (antes ahí estaba "Actualizar"; la tabla se sigue
-actualizando sola cada 5 minutos). Sirve para
-controlar las reglas del torneo. **Solo muestra a los jugadores que tienen alguna
-alerta**; los que están en regla no aparecen (y sus datos ni viajan al navegador).
-Si nadie tiene alertas, lo dice. Para cada jugador con alertas muestra:
+actualizando sola cada 5 minutos). Sirve para controlar las reglas del torneo.
+**Solo muestra a los jugadores que tienen alguna alerta**; si nadie tiene, lo dice.
+Abre al instante, porque no le consulta nada a Riot: lee lo que el sitio fue
+guardando solo (ver "Cómo funciona"). Para cada jugador con alertas hay dos partes:
+
+- **Ahora**: las sospechas de dúo vigentes, calculadas sobre sus **últimas 12
+  partidas**. Incluye las de nivel medio y alto.
+- **Histórico**: las sospechas **altas** y los días con el límite superado, cada
+  una con la fecha y hora en que se detectó. Quedan guardadas aunque el jugador
+  siga jugando y esas partidas salgan de las últimas 12.
+
+Las reglas:
 
 - **Posible dúo** (el dúo está prohibido). Riot no informa si una partida se jugó
   en dúo, así que se detecta por estadística, igual para otros participantes que
@@ -341,8 +349,9 @@ Si nadie tiene alertas, lo dice. Para cada jugador con alertas muestra:
   el 9 % de las veces, 4 veces el 4 % y 5 veces el 1,7 %. Sigue siendo una
   **alerta para revisar, no una prueba**: en elo alto hay poca gente en cola y se
   repiten compañeros. (En Maestro o más, además, Riot no permite hacer cola en dúo.)
-- **Límite diario superado**: los días de todo el torneo en que jugó más partidas
-  que el límite, con cuántas se pasó. (El historial público solo muestra hoy.)
+- **Límite diario superado**: los días en que jugó más partidas que el límite, con
+  cuántas se pasó. Se cuenta partida por partida a medida que las juega, así que
+  no depende de la ventana de 12. (El historial público solo muestra hoy.)
 
 Las remakes no cuentan ni cortan una racha. Los umbrales se cambian en
 `participants.json`:
@@ -364,16 +373,28 @@ panel no abre.
 ### Cómo funciona
 
 La clave se guarda solo en esa pestaña del navegador y viaja en cada pedido; el
-servidor la compara con el secret y no responde nada sin ella. Al abrir el panel
-se le piden a Riot las partidas del torneo de cada jugador, de a 20 por tanda, y
-se guarda en KV con quién jugó cada una (`lib/duo.js`), así las visitas siguientes
-solo traen las partidas nuevas.
+servidor la compara con el secret y no responde nada sin ella.
 
-**La primera vez tarda varios minutos**: Riot permite 100 consultas cada 2 minutos,
-así que el panel descarga el historial con pausas de 30 segundos entre tandas y va
-mostrando cuántas partidas faltan. Hay que dejar la pestaña abierta hasta que
-termine; si se cierra, la próxima vez sigue desde donde quedó. Mientras dura esa
-descarga, la tabla pública puede mostrar algún "Riot está limitando las consultas".
+La revisión no la hace el panel sino el sitio, solo y de a poco (`lib/duo.js`),
+para que alcance aunque haya 20 jugadores:
+
+1. Cada vez que se recalcula la tabla (el cron lo hace cada 5 minutos) se mira,
+   por jugador, si jugó algo nuevo. **Si no jugó, no se le consulta nada a Riot.**
+2. Si jugó, se trae solo la partida nueva (2 consultas) y se vuelve a analizar la
+   ventana de sus últimas 12 partidas. Nunca se revisa el historial completo.
+3. Las sospechas altas y los días pasados del límite se anotan en el histórico.
+
+Por cada pasada se gastan como mucho 12 consultas en esto; si muchos jugadores
+terminan una partida a la vez, a los que no les toca se los revisa en la pasada
+siguiente. Todo se guarda en KV, una clave por jugador (`watch:<puuid>`).
+
+Consecuencias de este diseño:
+
+- El panel **necesita el cron y el KV** andando; sin ellos no hay nada guardado.
+- Solo ve las partidas jugadas desde que se activó (y las últimas 12 anteriores,
+  que carga de a 4 por pasada). No reconstruye lo que pasó antes.
+- Una sospecha **media** que nunca llega a alta no queda en el histórico: se ve
+  mientras esté dentro de las últimas 12 partidas y después desaparece.
 
 Para probarlo en tu computadora, `ADMIN_KEY` va en `.dev.vars` (hay un ejemplo en
 `.dev.vars.example`).
@@ -447,8 +468,10 @@ jugador la primera vez, por la cuenta y el ícono), así que entra cómodo hasta
 **20 participantes**. La primera vez con muchos jugadores, algunos íconos pueden
 aparecer recién en la segunda actualización.
 
-Si un día se agotan las escrituras de KV, el sitio sigue funcionando, solo que sin
-guardar caché nueva hasta el día siguiente.
+Cada partida que juega un participante cuesta 3 escrituras de KV (la partida, la
+foto de LP y la revisión del panel). Con 20 jugadores a 12 partidas por día serían
+720 de las 1.000 diarias: entra, pero sin mucho margen. Si un día se agotan, el
+sitio sigue funcionando, solo que sin guardar nada nuevo hasta el día siguiente.
 
 ## Créditos
 

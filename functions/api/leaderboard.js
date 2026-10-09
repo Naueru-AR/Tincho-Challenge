@@ -3,6 +3,7 @@
 import { loadConfig, getAccount, getSoloQ, getProfileIcon, rankScore, cachedResponse, json, isDemo } from "../../lib/riot.js";
 import { demoLeaderboard } from "../../lib/demo.js";
 import { trackLp } from "../../lib/lp.js";
+import { watchPlayer } from "../../lib/duo.js";
 
 // Le pide a Riot el rango de cada jugador. Cloudflare gratis permite 50 consultas por
 // pedido, así que primero va lo imprescindible (cuenta y rango) y después los íconos.
@@ -37,11 +38,19 @@ async function loadRows(cfg, context) {
     })
   );
 
-  // Anotamos los LP de la última partida en segundo plano (no demora la respuesta).
+  // En segundo plano (no demora la respuesta): anotamos los LP de la última partida y
+  // revisamos si alguien jugó algo nuevo, para el panel del organizador.
+  const roster = new Map(cfg.players.map((p) => [p.riotId.toLowerCase(), p.alias || p.riotId.split("#")[0]]));
+  const budget = { left: 12 };
   for (const r of rows) {
-    if (!r.entry) continue;
+    if (!r.puuid) continue;
+    if (r.entry) {
+      context.waitUntil(
+        trackLp(r.puuid, r.entry, rankScore(r.entry), cfg, env).catch((err) => console.log("trackLp:", err.message))
+      );
+    }
     context.waitUntil(
-      trackLp(r.puuid, r.entry, rankScore(r.entry), cfg, env).catch((err) => console.log("trackLp:", err.message))
+      watchPlayer(r.puuid, r.entry, cfg, env, roster, budget).catch((err) => console.log("watchPlayer:", err.message))
     );
   }
   return rows;
