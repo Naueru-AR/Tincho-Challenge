@@ -184,6 +184,10 @@ diferencia entre las dos fotos son los LP de esa partida (`lib/lp.js`).
 - Sin KV configurado la página funciona igual, solo que sin LP por partida.
 
 ### Activar KV
+En este proyecto **ya está activado** (namespace `tincho-lp`, binding `LP` en
+`wrangler.toml`). Para comprobarlo, `/api/diag` muestra `lpBinding: true` y cuántos
+jugadores tienen foto guardada (`lpSnapshots`). Los pasos, por si hay que rehacerlo:
+
 1. En Cloudflare → **Storage & Databases → KV → Create** → nombre `tincho-lp`.
    Copiá el **ID** del namespace.
 2. Agregá esto al final de `wrangler.toml` (con tu ID) y hacé push:

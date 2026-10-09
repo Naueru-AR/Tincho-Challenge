@@ -1,3 +1,8 @@
 name = "soloq-challenge"
 pages_build_output_dir = "public"
 compatibility_date = "2026-09-01"
+
+# Guarda las "fotos" del rango para calcular los LP por partida (lib/lp.js).
+[[kv_namespaces]]
+binding = "LP"
+id = "71e75c21d5e747bca6f580bc6eda161c"

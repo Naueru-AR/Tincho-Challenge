@@ -1,5 +1,5 @@
 // GET /api/diag
-// Diagnóstico de RIOT_API_KEY. Nunca devuelve la key: solo su forma
+// Diagnóstico de RIOT_API_KEY y del KV de LP. Nunca devuelve la key: solo su forma
 // (largo, prefijo, caracteres raros) y qué contesta Riot al usarla.
 import { loadConfig } from "../../lib/riot.js";
 
@@ -21,6 +21,13 @@ export async function onRequestGet(context) {
     });
     out.riotStatus = res.status;
     out.riotMessage = res.ok ? "OK" : (await res.json().catch(() => null))?.status?.message ?? null;
+  }
+
+  // KV de los LP por partida: si está conectado y cuántos jugadores tienen "foto" guardada.
+  out.lpBinding = Boolean(context.env.LP);
+  if (out.lpBinding) {
+    out.lpSnapshots = (await context.env.LP.list({ prefix: "snap:" })).keys.length;
+    out.lpPlayersWithMatches = (await context.env.LP.list({ prefix: "lp:" })).keys.length;
   }
 
   return new Response(JSON.stringify(out, null, 2), {
