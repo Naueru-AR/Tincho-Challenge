@@ -79,10 +79,10 @@ export const POD_DEFS = `
     <defs><linearGradient id="pod-gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F7D774"/><stop offset="1" stop-color="#C8902E"/></linearGradient></defs>
   </svg>`;
 
-function podCard(p, i) {
+function podCard(p, i, emptyText) {
   const medal = `<span class="pod-medal" aria-hidden="true">${ICONS[i]}</span>`;
   const place = `<span class="pod-place">${PLACE[i]}</span>`;
-  if (!p) return `<li class="pod p${i + 1} empty"><span class="avatar">${medal}</span>${place}<span class="pod-vacant">Vacante</span></li>`;
+  if (!p) return `<li class="pod p${i + 1} empty"><span class="avatar">${medal}</span>${place}<span class="pod-vacant">${emptyText}</span></li>`;
   const games = p.wins + p.losses;
   return `
     <li class="pod p${i + 1}" style="--tier-c:${tierColor(p.tier)}">
@@ -95,4 +95,6 @@ function podCard(p, i) {
 }
 
 // Recibe los jugadores ya ordenados y devuelve el podio con sus tres primeros.
-export const podiumHtml = (players) => `<ol class="podium">${[0, 1, 2].map((i) => podCard(players[i], i)).join("")}</ol>`;
+// `emptyText` es lo que se muestra en un lugar que todavía no tiene jugador.
+export const podiumHtml = (players, emptyText = "Por definir") =>
+  `<ol class="podium">${[0, 1, 2].map((i) => podCard(players[i], i, emptyText)).join("")}</ol>`;

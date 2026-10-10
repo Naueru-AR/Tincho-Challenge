@@ -83,7 +83,7 @@ function renderLadder(players) {
 }
 
 /* ---------- top 3 ---------- */
-// Los tres primeros de la tabla general. El podio por bracket (High y Low Elo)
+// Los tres primeros de la tabla general. El podio por categoría (High y Low Elo)
 // está en podio.html y se habilita cuando termina el torneo.
 function renderTop3(players) {
   $("top3").innerHTML = POD_DEFS + podiumHtml(players.filter((p) => p.score >= 0));

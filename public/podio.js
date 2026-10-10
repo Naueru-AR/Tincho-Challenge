@@ -1,4 +1,5 @@
-// Podio final: los tres primeros de High Elo y de Low Elo.
+// Podio final: seis lugares, los tres primeros de High Elo y los tres primeros de Low Elo,
+// con las mismas tarjetas que el Top 3 de la página de inicio.
 // Se habilita cuando termina el torneo. Con ?preview se puede ver antes, para probar.
 import { $, esc, TIER_ES, POD_DEFS, podiumHtml, ddReady, setBrand } from "./shared.js";
 
@@ -23,18 +24,23 @@ function render(d) {
     ? `Resultado final al ${fmtDay.format(new Date(end.getTime() - 1))}.`
     : "Vista previa: el torneo todavía no terminó, estas posiciones pueden cambiar.";
 
+  // El corte: desde ese rango para arriba es High Elo; el escalón anterior para abajo, Low Elo.
+  // Con el corte en Diamante III queda "Diamante III o más" y "Diamante IV o menos".
   const cut = d.highEloFrom;
-  const cutText = `${TIER_ES[cut.tier]}${cut.rank ? " " + cut.rank : ""}`;
-  const brackets = [
-    { key: "high", name: "High Elo", note: `${cutText} o más` },
-    { key: "low", name: "Low Elo", note: `Por debajo de ${cutText}` },
+  const TIERS = Object.keys(TIER_ES), RANKS = ["IV", "III", "II", "I"];
+  const name = (tier, rank) => `${TIER_ES[tier]}${rank ? " " + rank : ""}`;
+  const r = RANKS.indexOf(cut.rank);
+  const below = r > 0 ? name(cut.tier, RANKS[r - 1]) : name(TIERS[TIERS.indexOf(cut.tier) - 1], "I");
+  const groups = [
+    { key: "high", name: "High Elo", note: `${name(cut.tier, cut.rank)} o más` },
+    { key: "low", name: "Low Elo", note: `${below} o menos` },
   ];
-  $("podiums").innerHTML = POD_DEFS + brackets.map((b) => {
+  $("podiums").innerHTML = POD_DEFS + groups.map((b) => {
     const top = d.players.filter((p) => p.bracket === b.key);
     return `
       <div class="podium-group ${b.key}">
         <h2 class="podium-title">${b.name}<small>${esc(b.note)}</small></h2>
-        ${top.length ? podiumHtml(top) : `<p class="podium-none">No hubo jugadores en este bracket.</p>`}
+        ${top.length ? podiumHtml(top, "Sin jugador") : `<p class="podium-none">No hubo jugadores en esta categoría.</p>`}
       </div>`;
   }).join("");
 }

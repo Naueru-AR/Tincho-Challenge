@@ -27,7 +27,7 @@ OP.GG) y cada Riot ID enlaza a su perfil en OP.GG.
 ```
 public/               ← el sitio (HTML, CSS, JS) + participants.json
   index.html, app.js  página principal
-  podio.html, podio.js  podio final por bracket
+  podio.html, podio.js  podio final por categoría
   reglas.html, reglas.js  reglas del torneo
   admin.html, admin.js  panel privado del organizador
   shared.js           lo que comparten las dos páginas
@@ -53,7 +53,7 @@ Editá `public/participants.json`:
 ```json
 {
   "title": "Tincho Challenge",
-  "edition": "Edición I",
+  "edition": "Edición II",
   "start": "2026-10-15T00:00:00-03:00",
   "end":   "2026-11-15T00:00:00-03:00",   // 31 días después de "start"
   "platform": "la2",        // LAS. LAN = la1, BR = br1, NA = na1, EUW = euw1
@@ -69,7 +69,7 @@ Editá `public/participants.json`:
 - `alias` es el nombre que se muestra; `riotId` es el `Nombre#TAG` real.
 - La lista `players` está **vacía** hasta que se confirmen los participantes. Con la
   lista vacía el sitio funciona igual: la tabla dice "Los participantes se anuncian
-  pronto" y el Top 3 muestra los tres lugares como vacantes. Para sumar jugadores,
+  pronto" y el Top 3 muestra los tres lugares como "Por definir". Para sumar jugadores,
   agregá una línea por cada uno. No uses Riot IDs inventados de relleno:
   pueden coincidir con cuentas reales de otra gente.
 - Al sacar a alguien de la lista, lo que el sitio tenía guardado de esa cuenta (LP
@@ -198,6 +198,8 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
 - `backup-produccion-2026-10-09-f`: con Reglas, banco de partidas, fechas reales y la
   lista de participantes vacía, antes de cambiar el panel a "jugadores sin banco"
   y el texto del inicio.
+- `backup-produccion-2026-10-09-g`: con el panel de "jugadores sin banco" y el texto
+  nuevo del inicio, antes de pasar a Edición II y sumar la regla de la prenda.
 
 Para ver los backups y volver a uno:
 
@@ -218,13 +220,14 @@ No se suben al repo (están en el `.gitignore`): `node_modules/`, `.wrangler/`,
 ## Top 3 y podio final
 
 **Top 3** (página principal, arriba de la tabla): los tres primeros de la tabla
-general, sin separar por bracket. Cada tarjeta muestra el ícono de la cuenta, con
+general, sin separar por categoría. Cada tarjeta muestra el ícono de la cuenta, con
 una corona en la esquina para el primero, una medalla de plata para el segundo y
 una de bronce para el tercero. Si hay menos de tres jugadores con
-rango, los lugares que faltan dicen "Vacante".
+rango, los lugares que faltan dicen "Por definir".
 
-**Podio final** (`podio.html`): una página aparte con dos podios, High Elo y Low
-Elo. Se habilita sola cuando termina el torneo (fecha `end`): recién ahí aparece
+**Podio final** (`podio.html`): una página aparte con **seis lugares**: los tres
+primeros de High Elo y los tres primeros de Low Elo, con las mismas tarjetas que el
+Top 3 del inicio (ícono de la cuenta, corona y medallas). Se habilita sola cuando termina el torneo (fecha `end`): recién ahí aparece
 el botón "Ver el podio final" en el encabezado. Antes de esa fecha la página solo
 avisa cuándo se habilita. Para verla antes y probarla, abrí `/podio?preview`.
 
@@ -236,7 +239,7 @@ con el **ícono de invocador** que tiene puesto en su cuenta de LoL (Riot
 mouse se resalta y al hacer clic abre su perfil en OP.GG en otra pestaña. Si el
 ícono no se puede cargar, se muestra la inicial del jugador.
 
-El corte entre brackets se define en `participants.json`:
+El corte entre las dos categorías (High Elo y Low Elo) se define en `participants.json`:
 
 ```json
 "highEloFrom": { "tier": "DIAMOND", "rank": "III" }
@@ -244,7 +247,7 @@ El corte entre brackets se define en `participants.json`:
 
 - **High Elo**: desde ese rango inclusive (Diamante III o más).
 - **Low Elo**: todo lo que esté por debajo (Diamante IV o menos).
-- El bracket se calcula con el **rango actual**. Para dejar fijo a un jugador,
+- La categoría se calcula con el **rango actual**. Para dejar fijo a un jugador,
   agregale `"bracket": "high"` o `"bracket": "low"`.
 - Los jugadores sin rango no entran en ningún podio.
 
@@ -268,7 +271,7 @@ winrate:
 La barra superior tiene el escudo (lleva al inicio) y tres opciones:
 
 - **Ranking**: baja directo a la tabla de posiciones.
-- **Podio**: abre `podio.html` (el podio final por bracket).
+- **Podio**: abre `podio.html` (el podio final por categoría).
 - **Reglas**: abre `reglas.html`.
 
 Las partidas por día y los días de cupo liberado que muestran las reglas salen de
@@ -282,6 +285,11 @@ ese archivo:
 - `<li class="no">` con la etiqueta "Prohibido": sale en rojo.
 - `<li class="ok">` con la etiqueta "Permitido": sale en verde.
 - `<li>` sin clase: informativa, en dorado.
+
+Los bloques actuales son: el formato (se juega solo, banco de partidas y cupo
+liberado), lo prohibido, las partidas previas a SoloQ, qué pasa si te cruzás con
+otro participante, la prenda para los perdedores al terminar, y el espíritu del
+torneo.
 
 Antes ahí había una página de Premios; el enlace viejo (`/premios`) redirige a las
 reglas (`public/_redirects`).
