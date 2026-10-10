@@ -288,7 +288,7 @@ ese archivo:
 
 Los bloques actuales son: el formato (se juega solo, banco de partidas y cupo
 liberado), lo prohibido, las partidas previas a SoloQ, qué pasa si te cruzás con
-otro participante, la prenda para los perdedores al terminar, y el espíritu del
+otro participante, el castigo para el último puesto al terminar, y el espíritu del
 torneo.
 
 Antes ahí había una página de Premios; el enlace viejo (`/premios`) redirige a las
