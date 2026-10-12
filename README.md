@@ -54,8 +54,8 @@ Editá `public/participants.json`:
 {
   "title": "Tincho Challenge",
   "edition": "Edición II",
-  "start": "2026-10-15T00:00:00-03:00",
-  "end":   "2026-11-15T00:00:00-03:00",   // 31 días después de "start"
+  "start": "2026-10-16T18:00:00-03:00",   // viernes 16/10 a las 18:00
+  "end":   "2026-11-16T00:00:00-03:00",   // medianoche del día 31
   "platform": "la2",        // LAS. LAN = la1, BR = br1, NA = na1, EUW = euw1
   "region": "americas",     // europe para EUW, asia para KR
   "opggRegion": "las",
@@ -336,15 +336,18 @@ guardadas para los días siguientes. Si hoy juega 4, mañana tiene 12.
 los que se puede jugar sin límite. Por eso el banco máximo es 28 × 8 = 224
 partidas.
 
-La duración sale de las fechas `start` y `end` de `participants.json`: `end`
-tiene que ser exactamente 31 días después de `start`. Esta edición empieza el
-**15 de octubre** a las 00:00 y termina el 15 de noviembre a las 00:00: el último
-día de juego es el 14 de noviembre y el cupo se libera el 12, 13 y 14.
+La duración sale de las fechas `start` y `end` de `participants.json`. Lo que
+cuenta son los **días de calendario**: entre el día de `start` y el último día de
+juego tiene que haber 31. Esta edición empieza el **viernes 16 de octubre a las
+18:00** y termina a la medianoche del 15 de noviembre (`end` es el 16 a las 00:00).
+El cupo se libera el 13, 14 y 15 de noviembre.
 
-Lo que se haya jugado antes del 15 no cuenta: ni descuenta del banco ni genera
-alertas en el panel.
+El primer día cuenta como un día entero para el banco (suma sus 8 partidas),
+aunque el torneo arranque a las 18:00. Lo que se haya jugado antes de esa hora no
+cuenta: ni descuenta del banco ni genera alertas en el panel.
 
-Las dos cifras se definen en `participants.json`:
+Las partidas por día y los días de cupo liberado también están en
+`participants.json`:
 
 ```json
 "dailyLimit": 8,
@@ -353,7 +356,7 @@ Las dos cifras se definen en `participants.json`:
 
 La cuenta es: **banco de hoy = 8 × días de torneo transcurridos − partidas jugadas
 antes de hoy**. El primer día hay 8; un día sin jugar deja 16 para el siguiente.
-Si un jugador se pasa del banco, queda registrado en el panel del organizador.
+Si un jugador se queda sin banco, aparece en el panel del organizador.
 
 El historial de cada jugador es **solo del día de hoy**: se reinicia a la
 medianoche y no muestra partidas de días anteriores. Al abrirlo aparece una franja

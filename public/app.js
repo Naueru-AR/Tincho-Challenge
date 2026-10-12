@@ -14,7 +14,9 @@ const fmtTime = new Intl.DateTimeFormat("es-AR", { hour: "2-digit", minute: "2-d
 
 function rangeText(start, end) {
   const s = new Date(start), e = new Date(new Date(end).getTime() - 1);
-  return `Del ${fmtDay.format(s)} al ${fmtDay.format(e)}`;
+  // La hora de inicio se toma tal cual está escrita en participants.json (hora del torneo).
+  const hour = String(start).slice(11, 16);
+  return `Del ${fmtDay.format(s)}${hour && hour !== "00:00" ? ` (${hour} hs)` : ""} al ${fmtDay.format(e)}`;
 }
 function ago(ts) {
   const m = Math.round((Date.now() - ts) / 6e4);
