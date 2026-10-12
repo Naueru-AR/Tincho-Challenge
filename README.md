@@ -60,18 +60,22 @@ Editá `public/participants.json`:
   "region": "americas",     // europe para EUW, asia para KR
   "opggRegion": "las",
   "players": [
-    { "alias": "Tomi", "riotId": "NombreEnJuego#TAG" },
-    { "alias": "Nacho", "riotId": "Otro#LAS", "baseline": { "wins": 12, "losses": 9 } }
+    { "riotId": "NombreEnJuego#TAG" },
+    { "riotId": "Otro#LAS", "alias": "Nacho", "baseline": { "wins": 12, "losses": 9 } }
   ]
 }
 ```
 
-- `alias` es el nombre que se muestra; `riotId` es el `Nombre#TAG` real.
-- La lista `players` está **vacía** hasta que se confirmen los participantes. Con la
-  lista vacía el sitio funciona igual: la tabla dice "Los participantes se anuncian
-  pronto" y el Top 3 muestra los tres lugares como "Por definir". Para sumar jugadores,
-  agregá una línea por cada uno. No uses Riot IDs inventados de relleno:
-  pueden coincidir con cuentas reales de otra gente.
+- De cada jugador alcanza con el `riotId`, que es el `Nombre#TAG` real. En la tabla se
+  muestra **el mismo nick, sin el `#TAG`** ("TDG Kairo#TDG" se ve como "TDG Kairo").
+  `alias` es opcional: solo hace falta si querés mostrar otro nombre.
+- La Edición II tiene **5 participantes**, todos de LAS: `TDG KiwiMau#love`,
+  `TDG Kairo#TDG`, `TDG Maomao#TDG`, `TDG Martin#TDG` y `TDG AngeloPe#TDG`. Para sumar o
+  cambiar jugadores, editá la lista `players`, una línea por cada uno. El `#TAG`
+  tiene que ser exacto. No uses Riot IDs inventados de relleno: pueden coincidir
+  con cuentas reales de otra gente.
+- Con la lista vacía el sitio funciona igual: la tabla dice "Los participantes se
+  anuncian pronto" y el Top 3 muestra los tres lugares como "Por definir".
 - Al sacar a alguien de la lista, lo que el sitio tenía guardado de esa cuenta (LP
   por partida, banco, alertas) se borra solo la próxima vez que se abre el panel
   del organizador.

@@ -10,5 +10,11 @@
   "freeLastDays": 3,
   "duo": { "streak": 2, "highStreak": 3, "perDay": 4, "neverAgainst": 5 },
   "highEloFrom": { "tier": "DIAMOND", "rank": "III" },
-  "players": []
+  "players": [
+    { "riotId": "TDG KiwiMau#love" },
+    { "riotId": "TDG Kairo#TDG" },
+    { "riotId": "TDG Maomao#TDG" },
+    { "riotId": "TDG Martin#TDG" },
+    { "riotId": "TDG AngeloPe#TDG" }
+  ]
 }
