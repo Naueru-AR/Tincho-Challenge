@@ -74,7 +74,8 @@ Editá `public/participants.json`:
   `TDG Dark Matter#TDG`, `TDG WeepingAngel#TDG`, `TDG Meleys#TDG`,
   `TDG Esponjaa#TDG`, `TDG Lævatæn#TDG`, `tdg ASOLutosex#TDG`,
   `TDG Anti Lucky#TDG`, `TDG Minerva#TDG`, `TDG Yun te amo#TDG`,
-  `TDG Minikeen#1207`. Para sumar o
+  `TDG Minikeen#1207`, `TDG TeCjo#TDG`, `TDGfasito#TDG`, `TDG LILIAMPAYNE#TDG` y
+  `TDG troglodita#TDG`. Para sumar o
   cambiar jugadores, editá la lista `players`, una línea por cada uno. El `#TAG`
   tiene que ser exacto. No uses Riot IDs inventados de relleno: pueden coincidir
   con cuentas reales de otra gente.
