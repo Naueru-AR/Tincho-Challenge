@@ -10,6 +10,7 @@
   "freeLastDays": 3,
   "duo": { "streak": 2, "highStreak": 3, "perDay": 4, "neverAgainst": 5 },
   "highEloFrom": { "tier": "DIAMOND", "rank": "III" },
+  "pickems": { "closes": "2026-10-17T18:00:00-03:00" },
   "players": [
     { "riotId": "TDG KiwiMau#love" },
     { "riotId": "TDG Kairo#TDG" },

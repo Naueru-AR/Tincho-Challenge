@@ -12,8 +12,11 @@ const span = (from, to) => (from === to ? day(from) : `${day(from)} al ${day(to)
 const pct = (x) => (x < 0.001 ? "menos de 0,1" : (x * 100).toLocaleString("es-AR", { maximumFractionDigits: x < 0.1 ? 1 : 0 }));
 let windowSize = 12;
 
-async function api() {
-  const res = await fetch(`/api/admin${demoParam}`, { headers: { "X-Admin-Key": sessionStorage.getItem(KEY) || "" } });
+async function api(body) {
+  const res = await fetch(`/api/admin${demoParam}`, {
+    headers: { "X-Admin-Key": sessionStorage.getItem(KEY) || "", ...(body && { "Content-Type": "application/json" }) },
+    ...(body && { method: "POST", body: JSON.stringify(body) }),
+  });
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw Object.assign(new Error(data.error || `El servidor respondió ${res.status}.`), { status: res.status });
   return data;
@@ -110,6 +113,57 @@ function render(data) {
     (pending ? ` · ${pending} todavía sin revisar` : "");
 }
 
+/* ---------- Pickems: resultados que carga el organizador ---------- */
+function renderPickems(players, pk) {
+  const opts = (sel, extra = "") => `<option value="">Sin definir</option>${extra}` +
+    players.map((p) => `<option value="${esc(p.riotId)}"${p.riotId === sel ? " selected" : ""}>${esc(p.alias)}</option>`).join("");
+  const names = new Set(pk.quitNames || []);
+  $("adm-pk-form").innerHTML = `
+    <label>Primer baneado
+      <select class="pk-input" name="firstBan">${opts(pk.firstBan, `<option value="none"${pk.firstBan === "none" ? " selected" : ""}>Nadie</option>`)}</select>
+    </label>
+    <label>¿Alguien abandonó el SoloQ?
+      <select class="pk-input" name="quit">
+        <option value="">Sin definir</option>
+        <option${pk.quit === "Sí" ? " selected" : ""}>Sí</option>
+        <option${pk.quit === "No" ? " selected" : ""}>No</option>
+      </select>
+    </label>
+    <fieldset class="adm-pk-quit"${pk.quit === "Sí" ? "" : " hidden"}>
+      <legend>¿Quiénes abandonaron?</legend>
+      ${players.map((p) => `<label class="adm-check"><input type="checkbox" name="quitNames" value="${esc(p.riotId)}"${names.has(p.riotId) ? " checked" : ""}> ${esc(p.alias)}</label>`).join("")}
+    </fieldset>
+    <label>Superó las expectativas (resultado de la votación)
+      <select class="pk-input" name="overachiever">${opts(pk.overachiever)}</select>
+    </label>
+    <div class="adm-pk-save">
+      <button class="refresh" type="submit">Guardar resultados</button>
+      <p class="pk-msg" id="adm-pk-msg" role="status"></p>
+    </div>`;
+  const f = $("adm-pk-form");
+  f.elements.quit.onchange = () => { f.querySelector(".adm-pk-quit").hidden = f.elements.quit.value !== "Sí"; };
+}
+
+$("adm-pk-form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const msg = $("adm-pk-msg");
+  const pickems = {
+    firstBan: f.elements.firstBan.value || null,
+    quit: f.elements.quit.value || null,
+    quitNames: [...f.querySelectorAll("input[name=quitNames]:checked")].map((c) => c.value),
+    overachiever: f.elements.overachiever.value || null,
+  };
+  try {
+    await api({ pickems });
+    msg.className = "pk-msg ok";
+    msg.textContent = "Guardado.";
+  } catch (err) {
+    msg.className = "pk-msg err";
+    msg.textContent = err.message;
+  }
+});
+
 /* ---------- carga ---------- */
 async function load() {
   $("adm-status").textContent = "Cargando…";
@@ -120,6 +174,7 @@ async function load() {
   $("adm-demo").hidden = !data.demo;
   show(true);
   render(data);
+  renderPickems(data.players, data.pickems || {});
 }
 
 function show(inside) {

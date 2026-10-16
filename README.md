@@ -27,8 +27,9 @@ OP.GG) y cada Riot ID enlaza a su perfil en OP.GG.
 ```
 public/               ← el sitio (HTML, CSS, JS) + participants.json
   index.html, app.js  página principal
-  podio.html, podio.js  podio final por categoría
+  podio.html, podio.js  podio final por categoría y podio de Pickems
   reglas.html, reglas.js  reglas del torneo
+  pickems.html, pickems.js  Pickems: predicciones antes del torneo
   admin.html, admin.js  panel privado del organizador
   shared.js           lo que comparten las dos páginas
 functions/api/        ← endpoints que corren en Cloudflare (esconden la API key)
@@ -36,9 +37,11 @@ functions/api/        ← endpoints que corren en Cloudflare (esconden la API ke
   player/[puuid].js   GET /api/player/:puuid
   diag.js             GET /api/diag (revisa la API key sin mostrarla)
   admin.js            GET /api/admin (panel del organizador, pide clave)
+  pickems.js          GET y POST /api/pickems (votar y ver resultados)
 lib/riot.js           cliente de Riot con caché (KV + Cache API)
 lib/lp.js             LP por partida (fotos del rango en Cloudflare KV)
 lib/duo.js            posibles dúos (últimas 12 partidas) e histórico de alertas
+lib/pickems.js        preguntas, puntos y resultados de los Pickems
 lib/demo.js           datos de ejemplo
 ```
 
@@ -277,10 +280,11 @@ winrate:
 
 ## Menú y reglas
 
-La barra superior tiene el escudo (lleva al inicio) y tres opciones:
+La barra superior tiene el escudo (lleva al inicio) y cuatro opciones:
 
 - **Ranking**: baja directo a la tabla de posiciones.
 - **Podio**: abre `podio.html` (el podio final por categoría).
+- **Pickems**: abre `pickems.html` (ver "Pickems").
 - **Reglas**: abre `reglas.html`.
 
 Las partidas por día y los días de cupo liberado que muestran las reglas salen de
@@ -393,7 +397,9 @@ Cómo se cuenta:
 
 En `/admin` hay un panel que pide una clave. Se entra con el botón **Admin**
 de la barra superior (antes ahí estaba "Actualizar"; la tabla se sigue
-actualizando sola cada 5 minutos). Sirve para controlar las reglas del torneo.
+actualizando sola cada 5 minutos). Sirve para controlar las reglas del torneo y, al
+final, para cargar los resultados de los Pickems que no se calculan solos (ver
+"Pickems").
 **Solo muestra a los jugadores que tienen alguna alerta**; si nadie tiene, lo dice.
 Abre al instante, porque no le consulta nada a Riot: lee lo que el sitio fue
 guardando solo (ver "Cómo funciona"). Para cada jugador con alertas puede haber
@@ -483,6 +489,123 @@ Consecuencias de este diseño:
 
 Para probarlo en tu computadora, `ADMIN_KEY` va en `.dev.vars` (hay un ejemplo en
 `.dev.vars.example`).
+
+## Pickems
+
+Un juego previo al torneo: cada participante predice cómo va a terminar. Hay **2400
+puntos** repartidos en 22 preguntas (2000 en las 17 originales y 400 en las 5
+que se sumaron después, contando el bonus). En la página van ordenadas por el tamaño de
+su tarjeta (las de campeón, con la grilla de fotos, al final), no por puntos.
+
+| Pregunta | Puntos | Se resuelve |
+|---|---|---|
+| Mejor winrate del torneo | 180 | Sola |
+| Peor winrate del torneo | 160 | Sola |
+| Ganador del torneo | 150 | Sola |
+| Último del torneo | 140 | Sola |
+| ¿Quién juega más partidas? | 120 | Sola |
+| ¿Quién juega menos partidas? | 110 | Sola |
+| Mejor KDA del torneo | 100 | Sola |
+| ¿Quién muere más en todo el torneo? | 100 | Sola |
+| ¿Quién juega la partida más larga? | 90 | Sola |
+| ¿Quién juega la partida más corta? (sin remakes) | 90 | Sola |
+| ¿Quién hace más kills en una partida? | 80 | Sola |
+| ¿Quién hace más asistencias en una partida? | 50 | Sola |
+| ¿Alguien se hace un pentakill? (sí/no) | 50 | Sola |
+| ¿Cuántos jugadores terminan en Master o más? (1, 2, 3, 4, 5+; si no termina ninguno, nadie suma) | 40 | Sola |
+| ¿Quién será el primer baneado? (incluye "Nadie") | 100 | Admin |
+| ¿Liand (tdg ASOLutosex) termina en Diamante o más? | 50 | Sola |
+| ¿Aheru (TDG WeepingAngel) juega más de 60 partidas? | 50 | Sola |
+| ¿Alguien abandona el SoloQ? (sí/no) | 50 (+50 si acierta quién) | Admin |
+| ¿Quién supera las expectativas? | 100 | Admin |
+| Top 3 del torneo, en orden | 210 | Sola |
+| Campeón con más winrate | 200 | Sola |
+| Campeón jugado por más jugadores distintos | 130 | Sola |
+
+- Top 3, ganador y último son de la **tabla general** (los 19 juntos, sin importar
+  High o Low Elo). Los que terminan sin rango no entran.
+- En el Top 3 se suman 20 puntos por cada jugador que termina en el Top 3 y 50 más
+  si además está en el puesto exacto.
+- Winrate y KDA cuentan solo entre los que juegan al menos 20 partidas del torneo
+  (si nadie llega, entre todos los que jugaron). El campeón con más winrate, entre
+  los que se jueguen al menos 10 partidas sumando a todos. Los dos mínimos se
+  cambian en `participants.json` con `"pickems": { "minGames": 20, "minChampGames": 10 }`.
+- Si hay empate, vale cualquiera de los empatados. Una pregunta que no se puede
+  resolver (por ejemplo, si nadie juega) no le da puntos a nadie.
+- A igual puntaje, queda arriba el que votó primero.
+
+Las preguntas y los puntos están en `lib/pickems.js` (`QUESTIONS`). Las de Liand y
+Aheru apuntan a sus Riot ID (`target`), así que si cambian de cuenta hay que
+actualizarlo ahí.
+
+### Resultados que carga el organizador
+
+"Primer baneado", "¿Alguien abandona el SoloQ?" y "¿Quién supera las expectativas?"
+no se pueden calcular solos. Se cargan en el **panel Admin**, en la sección
+**Pickems** (se guardan en KV, `pickems:manual`), y se pueden corregir las veces que
+haga falta: los puntos se recalculan solos. Mientras no estén cargados, esas
+preguntas figuran "A definir por el organizador" y no suman.
+
+- Primer baneado: un participante o "Nadie".
+- Abandono: Sí o No y, si es Sí, quiénes abandonaron. Acertar Sí/No da 50 puntos y
+  acertar además uno de los nombres, 50 más.
+- Superó las expectativas: el ganador de la votación que se hace al terminar.
+
+### Cómo se vota
+
+- Solo votan los participantes de `participants.json`. Eligen su Riot ID de la
+  lista y ponen un PIN de 4 números, que queda como su clave para volver a entrar y
+  ver lo que votaron.
+- **Todas las preguntas son obligatorias**: si falta alguna (o un puesto del Top 3),
+  se marca en rojo y el voto no se envía. El sitio también rechaza un voto incompleto.
+- **Cada uno vota una sola vez**: una vez enviado, el voto no se puede cambiar (el
+  sitio lo rechaza). Antes de enviar se pide confirmación.
+- 5 PIN incorrectos seguidos bloquean esa cuenta 15 minutos.
+- En las preguntas de campeón se elige de una grilla con la foto de cada campeón
+  del LoL (de Data Dragon, siempre la versión más nueva), con buscador. Tocar el
+  elegido de nuevo lo deselecciona.
+- Se puede votar hasta el cierre: `"pickems": { "closes": "2026-10-17T18:00:00-03:00" }`
+  en `participants.json` (sábado 17/10 a las 18:00; si no está, cierra cuando empieza
+  el torneo). Mientras tanto solo se ve quién votó; los picks son secretos.
+- Desde el cierre quedan bloqueados y se ven los picks de todos.
+- Al terminar (`end`), la página muestra la tabla de puntos y las respuestas.
+
+Si alguien se olvida el PIN (o un participante se anotó con la cuenta de otro),
+se borra su voto en Cloudflare → Workers & Pages → KV → `tincho-lp`: la clave es
+`pick:` seguido del Riot ID en minúsculas (por ejemplo `pick:tdg kairo#tdg`).
+Después puede volver a votar con un PIN nuevo, si la votación no cerró. Es la única
+forma de rehacer un voto.
+
+### De dónde salen los resultados
+
+Nada se va sumando durante el torneo: todo se calcula **recién cuando termina**, así
+no quedan puntos fantasmas por una pasada del cron que falló o una partida que se
+procesó a medias.
+
+1. **Tabla final**: la primera vez que la tabla sale completa después del final, se
+   guarda en KV (`pickems:final`) y ya no cambia aunque alguien siga jugando. De ahí
+   salen el Top 3, el ganador, el último y la cantidad de Master.
+2. **Recuento de partidas**: 1 hora después del final (para que Riot publique las
+   últimas partidas), el cron empieza a traer el historial completo de SoloQ de cada
+   jugador entre `start` y `end`, y cuenta todo desde cero: partidas, victorias,
+   KDA, muertes, kills y asistencias por partida, pentas, duración y campeones. Las
+   remakes no cuentan. Se hace de a tandas (120 partidas por pasada, respetando el
+   tope de consultas a Riot) y el avance queda en KV (`pickems:calc`); con 19
+   jugadores tarda unas horas.
+3. Mientras el recuento no termine con todos, la página dice "calculando resultados"
+   y muestra los picks sin puntos. Cuando termina, aparecen los puntos y las
+   respuestas, con un **podio de Pickems** arriba: los tres que más puntos sacaron,
+   con corona y medallas como el podio del torneo. Ese mismo podio aparece también
+   al final de la página Podio. Con el torneo terminando a las 00:00, los puntos
+   suelen estar entre las 03:00 y las 04:00.
+
+Las partidas que el sitio ya tiene guardadas (las de los últimos 30 días) no se le
+vuelven a pedir a Riot. Durante el recuento se deja de revisar dúos y banco, que a
+esa altura ya no hacen falta. El margen de 1 hora se cambia en `participants.json`
+con `"pickems": { "waitMinutes": 60 }`.
+
+Para votar, los Pickems no le consultan nada a Riot: solo leen y escriben KV (una
+escritura por cada vez que alguien guarda sus picks).
 
 ## Remakes
 

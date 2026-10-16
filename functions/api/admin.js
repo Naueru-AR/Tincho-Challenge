@@ -1,4 +1,6 @@
-// GET /api/admin → sospechas de dúo y días con el límite superado, por jugador.
+// GET /api/admin → sospechas de dúo y días con el límite superado, por jugador, y los
+// resultados de los Pickems que carga el organizador.
+// POST /api/admin → guarda esos resultados ({ pickems: { firstBan, quit, quitNames, overachiever } }).
 //
 // Panel privado del organizador. Solo responde si el pedido trae la clave ADMIN_KEY
 // (un secret de Cloudflare) en el encabezado X-Admin-Key.
@@ -8,6 +10,7 @@
 import { loadConfig, getAccount, isDemo, tzOffset } from "../../lib/riot.js";
 import { WINDOW, adminView, applyRecords, emptyState, forgetOthers, loadState } from "../../lib/duo.js";
 import { demoPlayers, demoRecords } from "../../lib/demo.js";
+import { MANUAL, cleanManual } from "../../lib/pickems.js";
 
 const DAY = 24 * 60 * 60 * 1000;
 
@@ -26,10 +29,29 @@ async function sameKey(a, b) {
   return diff === 0;
 }
 
-export async function onRequestGet(context) {
-  const { env, request } = context;
+// Devuelve la respuesta de error si la clave no es válida, o null si está todo bien.
+async function denied(env, request) {
   if (!env.ADMIN_KEY) return reply({ error: "El panel no está configurado: falta el secret ADMIN_KEY en Cloudflare." }, 503);
   if (!(await sameKey(request.headers.get("X-Admin-Key") || "", env.ADMIN_KEY))) return reply({ error: "Clave incorrecta." }, 401);
+  return null;
+}
+
+export async function onRequestPost(context) {
+  const { env, request } = context;
+  const no = await denied(env, request);
+  if (no) return no;
+  if (!env.LP) return reply({ error: "El almacenamiento KV no está conectado." }, 503);
+  const cfg = await loadConfig(context);
+  const body = await request.json().catch(() => ({}));
+  const manual = cleanManual(body.pickems, cfg);
+  await env.LP.put(MANUAL, JSON.stringify(manual));
+  return reply({ pickems: manual });
+}
+
+export async function onRequestGet(context) {
+  const { env, request } = context;
+  const no = await denied(env, request);
+  if (no) return no;
 
   let cfg = await loadConfig(context);
   const demo = isDemo(context);
@@ -81,5 +103,6 @@ export async function onRequestGet(context) {
     window: WINDOW,
     limit: cfg.dailyLimit ?? 8,
     players,
+    pickems: (env.LP && (await env.LP.get(MANUAL, "json"))) || {},
   });
 }

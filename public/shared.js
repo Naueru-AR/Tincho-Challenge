@@ -1,4 +1,4 @@
-// Lo que comparten la página principal (app.js) y el podio final (podio.js).
+// Lo que comparten la página principal (app.js), el podio final (podio.js) y los Pickems.
 export const TIER_ES = {
   IRON: "Hierro", BRONZE: "Bronce", SILVER: "Plata", GOLD: "Oro", PLATINUM: "Platino",
   EMERALD: "Esmeralda", DIAMOND: "Diamante", MASTER: "Maestro", GRANDMASTER: "Gran Maestro", CHALLENGER: "Retador",
@@ -83,6 +83,16 @@ function podCard(p, i, emptyText) {
   const medal = `<span class="pod-medal" aria-hidden="true">${ICONS[i]}</span>`;
   const place = `<span class="pod-place">${PLACE[i]}</span>`;
   if (!p) return `<li class="pod p${i + 1} empty"><span class="avatar">${medal}</span>${place}<span class="pod-vacant">${emptyText}</span></li>`;
+  // En el podio de los Pickems la tarjeta muestra los puntos en lugar del rango.
+  if (p.pts != null) {
+    return `
+    <li class="pod p${i + 1}" style="--tier-c:${tierColor(p.tier)}">
+      ${avatarHtml(p, medal)}
+      ${place}
+      <span class="pod-name">${esc(p.alias)}</span>
+      <span class="pod-rank pod-pts">${p.pts}<small>de ${p.max} pts</small></span>
+    </li>`;
+  }
   const games = p.wins + p.losses;
   return `
     <li class="pod p${i + 1}" style="--tier-c:${tierColor(p.tier)}">
@@ -92,6 +102,22 @@ function podCard(p, i, emptyText) {
       <span class="pod-rank">${rankText(p)}<small>${p.lp} LP</small></span>
       <span class="pod-wl">${p.wins}–${p.losses}${games ? ` · ${Math.round((p.wins / games) * 100)}%` : ""}</span>
     </li>`;
+}
+
+// Podio de los Pickems: los tres que más puntos sacaron. `votes` viene ordenado por puntos y
+// `players` (de /api/leaderboard, opcional) aporta el ícono de la cuenta y el link a OP.GG.
+export function pickemsPodiumHtml(votes, players = [], max = 2000) {
+  const byId = new Map(players.map((p) => [p.riotId, p]));
+  const top = votes.slice(0, 3).map((v) => {
+    const p = byId.get(v.riotId) || {};
+    const [name, tag = ""] = v.riotId.split("#");
+    return {
+      alias: v.alias, tier: p.tier || "GOLD", profileIconId: p.profileIconId ?? null,
+      opggUrl: p.opggUrl || `https://op.gg/lol/summoners/las/${encodeURIComponent(name)}-${encodeURIComponent(tag)}`,
+      pts: v.total, max,
+    };
+  });
+  return podiumHtml(top);
 }
 
 // Recibe los jugadores ya ordenados y devuelve el podio con sus tres primeros.

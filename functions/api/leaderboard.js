@@ -4,6 +4,7 @@ import { loadConfig, getAccount, getSoloQ, getProfileIcon, rankScore, cachedResp
 import { demoLeaderboard, demoPlayers } from "../../lib/demo.js";
 import { trackLp } from "../../lib/lp.js";
 import { watchPlayer } from "../../lib/duo.js";
+import { saveFinal, calcStep, calcReadyAt } from "../../lib/pickems.js";
 
 // Cloudflare gratis permite 50 consultas por pedido, contando las de caché. Este endpoint
 // usa hasta 5 de caché y archivos, así que a Riot se le pueden hacer como mucho estas:
@@ -55,8 +56,11 @@ async function loadRows(cfg, context, env) {
         if (env.riotBudget.left <= 0) break; // sin consultas: el resto queda para la próxima pasada
         if (!r.puuid) continue;
         if (r.entry) await trackLp(r.puuid, r.entry, rankScore(r.entry), cfg, env).catch(log("trackLp:"));
-        await watchPlayer(r.puuid, r.entry, cfg, env, roster, budget).catch(log("watchPlayer:"));
+        // Cuando empieza el recuento de los Pickems ya no hace falta revisar dúos ni banco.
+        if (Date.now() < calcReadyAt(cfg)) await watchPlayer(r.puuid, r.entry, cfg, env, roster, budget).catch(log("watchPlayer:"));
       }
+      // Después del final: un paso del recuento de partidas para los Pickems.
+      await calcStep(cfg, env, rows).catch(log("calcStep:"));
     })()
   );
   return rows;
@@ -138,6 +142,8 @@ export async function onRequestGet(context) {
     }
     data.players = sorted(data.players);
     if (complete) remember(context, LAST_GOOD, data, 60 * 60 * 24);
+    // Terminado el torneo, la primera tabla completa queda guardada para los Pickems.
+    if (complete && Date.now() >= new Date(cfg.end).getTime()) context.waitUntil(saveFinal(context.env, data).catch(() => {}));
     return { response: json(data, 120), cacheable: complete };
   });
 }
