@@ -83,6 +83,8 @@ function body(cfg, rows, demo) {
       alias: p.alias || name,
       riotId: p.riotId,
       opggUrl: `https://op.gg/lol/summoners/${cfg.opggRegion}/${encodeURIComponent(name)}-${encodeURIComponent(tag)}`,
+      // Canal de Kick, si lo cargaste con "kick": "<canal>" en participants.json.
+      kickUrl: p.kick ? `https://kick.com/${encodeURIComponent(p.kick)}` : null,
       puuid: r.puuid ?? null,
       profileIconId: r.profileIconId ?? null,
       tier: r.tier ?? null,

@@ -273,6 +273,11 @@ a.avatar:hover, a.avatar:focus-visible {
 .who { min-width: 0; display: flex; align-items: center; gap: .85rem; }
 .who .avatar { z-index: 1; --av-hover: var(--tier-c, var(--gold)); }
 .who-text { min-width: 0; }
+.who-name { display: flex; align-items: center; gap: .45rem; min-width: 0; }
+.who-name .alias { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.kick { position: relative; z-index: 1; flex: none; display: block; width: .85rem; height: .85rem; transition: transform .16s, filter .16s; }
+.kick svg { display: block; width: 100%; height: 100%; }
+.kick:hover, .kick:focus-visible { outline: none; transform: scale(1.25); filter: drop-shadow(0 0 5px #53FC18); }
 .alias { display: block; font: 700 1.25rem/1.25 var(--display); }
 .rid { display: block; color: var(--dim); font-size: .85rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rid a { position: relative; z-index: 1; text-decoration: none; }

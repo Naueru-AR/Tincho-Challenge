@@ -55,6 +55,13 @@ export function avatarHtml(p, extra = "") {
     </a>`;
 }
 
+/* ---------- canal de Kick ---------- */
+// Una K verde chiquita al lado del nombre, para los que transmiten en Kick.
+export const kickHtml = (p) => p.kickUrl ? `
+  <a class="kick" href="${esc(p.kickUrl)}" target="_blank" rel="noopener" title="Ver a ${esc(p.alias)} en Kick" aria-label="Canal de ${esc(p.alias)} en Kick">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 2h6v20H4zM10 8h3v8h-3zM13 5h3v5h-3zM16 2h4v5h-4zM13 14h3v5h-3zM16 17h4v5h-4z" fill="#53FC18"/></svg>
+  </a>` : "";
+
 /* ---------- podio: corona para el 1.º, medalla de plata y de bronce ---------- */
 const CROWN = `
   <svg viewBox="0 0 56 40" aria-hidden="true">

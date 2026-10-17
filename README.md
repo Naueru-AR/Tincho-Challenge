@@ -266,6 +266,13 @@ El corte entre las dos categorías (High Elo y Low Elo) se define en `participan
 El orden de la página principal es: encabezado, Top 3, tabla de posiciones y, al
 final, la escalera.
 
+### Canal de Kick
+
+Si un participante transmite en Kick, se le agrega `"kick": "<canal>"` en
+`participants.json` (por ejemplo `{ "riotId": "TDG Kairo#TDG", "kick": "nkairoo" }`).
+En la tabla aparece una K verde chiquita al lado de su nombre, que abre
+`https://kick.com/<canal>` en otra pestaña.
+
 ## Tabla de posiciones
 
 Cada fila muestra el puesto, el ícono de la cuenta con el nombre, el rango y el

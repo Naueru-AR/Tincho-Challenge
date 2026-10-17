@@ -13,7 +13,7 @@
   "pickems": { "closes": "2026-10-17T18:00:00-03:00" },
   "players": [
     { "riotId": "TDG KiwiMau#love" },
-    { "riotId": "TDG Kairo#TDG" },
+    { "riotId": "TDG Kairo#TDG", "kick": "nkairoo" },
     { "riotId": "TDG Maomao#TDG" },
     { "riotId": "TDG Martin#TDG" },
     { "riotId": "TDG AngeloPe#TDG" },
