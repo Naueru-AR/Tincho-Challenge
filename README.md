@@ -356,6 +356,11 @@ juego tiene que haber 31. Esta edición empieza el **viernes 16 de octubre a las
 18:00** y termina a la medianoche del 15 de noviembre (`end` es el 16 a las 00:00).
 El cupo se libera el 13, 14 y 15 de noviembre.
 
+**Cada partida cuenta para el día en que empezó**, en el banco, en el historial de
+"hoy" y en los Pickems. Una que arranca a las 23:47 y termina a las 00:12 es del día
+anterior, y no aparece en el historial ni descuenta del banco del día siguiente. Las
+que empezaron antes de `start` no cuentan, aunque terminen después.
+
 El primer día cuenta como un día entero para el banco (suma sus 8 partidas),
 aunque el torneo arranque a las 18:00. Lo que se haya jugado antes de esa hora no
 cuenta: ni descuenta del banco ni genera alertas en el panel.
@@ -488,6 +493,9 @@ siguiente. Todo se guarda en KV, una clave por jugador (`watch:<puuid>`).
 
 Consecuencias de este diseño:
 
+- Un jugador **sin rango** (todavía en clasificación) no tiene victorias ni derrotas
+  que comparar, así que a ese se le revisa el historial cada 10 minutos (1 consulta).
+  Cuando ya tiene rango, vuelve a revisarse solo cuando cambia su total.
 - El panel **necesita el cron y el KV** andando; sin ellos no hay nada guardado.
 - Solo ve las partidas jugadas desde que se activó (y las últimas 12 anteriores,
   que carga de a 4 por pasada). No reconstruye lo que pasó antes.

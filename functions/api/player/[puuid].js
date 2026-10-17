@@ -51,7 +51,11 @@ async function today(puuid, cfg, limit, dayStart, env) {
       : Date.now() < new Date(cfg.start).getTime() ? limit
       : allowanceUntil(date, cfg) - playedBefore(state, date, cfg);
     const loaded = await Promise.all(ids.map((id) => getMatch(id, cfg, env)));
-    const matches = loaded.filter(Boolean).map((m) => {
+    // Cada partida es del día en que EMPEZÓ, igual que en el banco (lib/duo.js). Riot también
+    // devuelve las que empezaron antes de medianoche y terminaron después: esas son de ayer
+    // y ya están contadas ahí, así que no se muestran ni se cuentan hoy.
+    const started = (m) => m.info.gameStartTimestamp ?? m.info.gameCreation;
+    const matches = loaded.filter((m) => m && started(m) >= dayStart).map((m) => {
       const me = m.info.participants.find((p) => p.puuid === puuid);
       return {
         id: m.metadata.matchId,
