@@ -313,6 +313,10 @@ a.avatar:hover, a.avatar:focus-visible {
 .today.over .today-count b { color: var(--loss); }
 .today-flag { font: 700 .72rem/1 var(--display); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); }
 .today-flag.full { color: var(--gold); }
+.today-flag.ahead { color: #1A1305; padding: .3rem .55rem; background: var(--gold); clip-path: polygon(.4rem 0, 100% 0, calc(100% - .4rem) 100%, 0 100%); }
+.today.ahead { border-color: color-mix(in srgb, var(--gold) 45%, transparent); }
+.today.ahead .today-meter i { background: var(--gold); }
+.today-warn { margin: .55rem 0 0; color: var(--loss); font-size: .88rem; font-weight: 600; }
 .today-flag.free { color: var(--win); }
 .today-flag.over { padding: .3rem .55rem; color: #fff; background: var(--loss); clip-path: polygon(.4rem 0, 100% 0, calc(100% - .4rem) 100%, 0 100%); }
 .today-sum { margin-left: auto; color: var(--muted); font-size: .9rem; }

@@ -356,6 +356,16 @@ juego tiene que haber 31. Esta edición empieza el **viernes 16 de octubre a las
 18:00** y termina a la medianoche del 15 de noviembre (`end` es el 16 a las 00:00).
 El cupo se libera el 13, 14 y 15 de noviembre.
 
+**Adelanto y sanción.** Se pueden adelantar hasta **2 partidas**: el banco puede
+quedar en −1 o −2, y eso se descuenta de los días siguientes (si tiene 8 y juega 10,
+al otro día arranca con 6). Si un día juega y queda con más de 2 adelantadas, se le
+aplica **solo** una sanción de **8 partidas** (un día del torneo), que se resta del
+banco. Cada día en que vuelve a pasarse suma otra sanción. En el historial de "hoy"
+el adelanto se ve en dorado ("Adelantó 1 de 2") y la sanción en rojo, con la
+advertencia; en el panel Admin aparece quién adelantó o fue sancionado, y cuándo.
+Los dos números se cambian en `participants.json` con `"advance": 2` y
+`"penalty": 8` (por defecto, la sanción es igual a `dailyLimit`).
+
 **Cada partida cuenta para el día en que empezó**, en el banco, en el historial de
 "hoy" y en los Pickems. Una que arranca a las 23:47 y termina a las 00:12 es del día
 anterior, y no aparece en el historial ni descuenta del banco del día siguiente. Las

@@ -178,22 +178,29 @@ function renderSummary(today, sum) {
         </div>
       </div>`;
   }
-  // `bank` es lo que tenía disponible al empezar el día; `left`, lo que le queda ahora.
-  const { played, bank, left } = today;
-  const flag = left < 0 ? `<span class="today-flag over">Banco superado por ${-left}</span>`
+  // `bank` es lo que tenía disponible al empezar el día; `left`, lo que le queda ahora (ya con
+  // la sanción, si la hubo). Se pueden adelantar hasta `advance` partidas (banco negativo);
+  // pasarse de eso es una sanción de `penalty` partidas.
+  const { played, bank, left, advance = 2, penalty = 8 } = today;
+  const banned = today.penalized || left < -advance;
+  const flag = today.penalized ? `<span class="today-flag over">Sanción: −${penalty} partidas</span>`
+    : left < -advance ? `<span class="today-flag over">Sancionado: banco en ${signed(left)}</span>`
+    : left < 0 ? `<span class="today-flag ahead">Adelantó ${-left} de ${advance}</span>`
     : left === 0 ? `<span class="today-flag full">Banco agotado</span>`
     : `<span class="today-flag">${left === 1 ? "Le queda 1" : `Le quedan ${left}`}</span>`;
+  const warn = banned ? `
+      <p class="today-warn">⚠ Superó el adelanto de ${advance} partidas: sanción de ${penalty} partidas (un día del torneo), que se descuenta de su banco.${left < 0 ? ` Banco actual: ${signed(left)}.` : ""}</p>` : "";
   const used = bank > 0 ? Math.min(100, Math.round((played / bank) * 100)) : played ? 100 : 0;
   return `
-    <div class="today${left < 0 ? " over" : ""}">
+    <div class="today${banned ? " over" : left < 0 ? " ahead" : ""}">
       <div class="today-row">
         <span class="today-title">Hoy</span>
         ${games(played)}
-        <span class="today-count" title="Cada día suma ${today.limit} partidas; las que no se usan se acumulan.">Banco <b>${Math.max(bank, 0)}</b></span>
+        <span class="today-count" title="Cada día suma ${today.limit} partidas; las que no se usan se acumulan. Se pueden adelantar hasta ${advance}.">Banco <b>${bank}</b></span>
         ${flag}
         ${sum ? `<span class="today-sum">${sum}</span>` : ""}
       </div>
-      <div class="today-meter" role="img" aria-label="Jugó ${played} de las ${Math.max(bank, 0)} partidas que tenía en el banco"><i style="width:${used}%"></i></div>
+      <div class="today-meter" role="img" aria-label="Jugó ${played} de las ${Math.max(bank, 0)} partidas que tenía en el banco"><i style="width:${used}%"></i></div>${warn}
     </div>`;
 }
 

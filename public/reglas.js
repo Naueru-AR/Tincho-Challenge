@@ -14,5 +14,7 @@ fetch("/participants.json")
     const fill = (cls, value) => { if (value != null) for (const el of document.querySelectorAll(cls)) el.textContent = value; };
     fill(".rule-limit", cfg.dailyLimit);
     fill(".rule-free", cfg.freeLastDays);
+    fill(".rule-advance", cfg.advance ?? 2);
+    fill(".rule-penalty", cfg.penalty ?? cfg.dailyLimit);
   })
   .catch(() => {}); // si falla, la página queda con los textos por defecto

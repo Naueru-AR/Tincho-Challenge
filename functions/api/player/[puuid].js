@@ -4,7 +4,7 @@
 // El historial se reinicia cada medianoche: no se muestran partidas de días anteriores.
 import { loadConfig, getMatchIds, getMatch, isRemake, tzOffset, cachedResponse, withBudget, json, isDemo } from "../../../lib/riot.js";
 import { demoMatches, demoBank } from "../../../lib/demo.js";
-import { allowanceUntil, dayKey, isFreeDay, loadState, playedBefore } from "../../../lib/duo.js";
+import { bankRules, dayKey, isFreeDay, ledger, loadState } from "../../../lib/duo.js";
 import { getLpChanges } from "../../../lib/lp.js";
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -16,40 +16,42 @@ function startOfToday(cfg) {
   return Math.floor((Date.now() + offset) / DAY) * DAY - offset;
 }
 
-// `bank` es cuántas partidas tenía disponibles al empezar el día, o null si es uno de los
+// `bank` es el estado del banco de hoy (ver ledger en lib/duo.js), o null si es uno de los
 // últimos días del torneo, con el cupo liberado. Las remakes se informan aparte y no
 // descuentan del banco.
-function respond(matches, limit, bank, maxAge) {
+function respond(matches, rules, bank, maxAge) {
   const played = matches.filter((m) => !m.remake).length;
-  const today = bank === null ? { limit, played, free: true } : { limit, played, bank, left: bank - played };
+  const { limit, advance, penalty } = rules;
+  const today = bank === null ? { limit, played, free: true }
+    : { limit, played, bank: bank.start, left: bank.left, advance, penalty, penalized: bank.penalized, penalties: bank.penalties.length };
   return json({ matches, today }, maxAge);
 }
 
 export async function onRequestGet(context) {
   const puuid = context.params.puuid;
   const cfg = await loadConfig(context);
-  const limit = cfg.dailyLimit ?? 8;
-  if (isDemo(context) || puuid.startsWith("demo-")) return respond(demoMatches(puuid), limit, demoBank(puuid), 0);
+  const rules = bankRules(cfg);
+  if (isDemo(context) || puuid.startsWith("demo-")) {
+    const matches = demoMatches(puuid);
+    const start = demoBank(puuid);
+    const played = matches.filter((m) => !m.remake).length;
+    const bank = start === null ? null : { start, left: start - played, penalized: false, penalties: [] };
+    return respond(matches, rules, bank, 0);
+  }
 
   // Las partidas de hoy solo cuentan si el torneo ya empezó.
   const dayStart = Math.max(startOfToday(cfg), new Date(cfg.start).getTime());
   // La respuesta queda en caché 2 minutos; las partidas ya vistas salen de KV, no de Riot.
-  return cachedResponse(context, () => today(puuid, cfg, limit, dayStart, withBudget(context.env, 42)));
+  return cachedResponse(context, () => today(puuid, cfg, rules, dayStart, withBudget(context.env, 42)));
 }
 
-async function today(puuid, cfg, limit, dayStart, env) {
+async function today(puuid, cfg, rules, dayStart, env) {
   try {
     const [ids, lpChanges, state] = await Promise.all([
       getMatchIds(puuid, cfg, env, MAX_PER_DAY, dayStart),
       getLpChanges(puuid, env),
       loadState(puuid, env), // lo jugado en días anteriores, para el banco
     ]);
-    // Banco al empezar el día: lo habilitado hasta hoy menos lo ya jugado antes de hoy.
-    // Si el torneo todavía no empezó, se muestra el banco del primer día.
-    const date = dayKey(Date.now(), cfg);
-    const bank = isFreeDay(date, cfg) ? null
-      : Date.now() < new Date(cfg.start).getTime() ? limit
-      : allowanceUntil(date, cfg) - playedBefore(state, date, cfg);
     const loaded = await Promise.all(ids.map((id) => getMatch(id, cfg, env)));
     // Cada partida es del día en que EMPEZÓ, igual que en el banco (lib/duo.js). Riot también
     // devuelve las que empezaron antes de medianoche y terminaron después: esas son de ayer
@@ -72,7 +74,14 @@ async function today(puuid, cfg, limit, dayStart, env) {
         endedAt: m.info.gameEndTimestamp,
       };
     });
-    return { response: respond(matches, limit, bank, 120), cacheable: true };
+    // El banco: lo guardado de los días anteriores y, para hoy, las partidas de este historial
+    // (están más al día). Si el torneo todavía no empezó, se muestra el banco del primer día.
+    const date = dayKey(Date.now(), cfg);
+    const played = matches.filter((m) => !m.remake).length;
+    const bank = isFreeDay(date, cfg) ? null
+      : Date.now() < new Date(cfg.start).getTime() ? { start: rules.limit, left: rules.limit, penalized: false, penalties: [] }
+      : ledger(state, cfg, date, played);
+    return { response: respond(matches, rules, bank, 120), cacheable: true };
   } catch (err) {
     const msg = err.status === 429 || err.status === "budget" ? "Riot está limitando las consultas. Probá en un minuto." : err.message;
     const response = new Response(JSON.stringify({ error: msg }), { status: 502, headers: { "Content-Type": "application/json" } });

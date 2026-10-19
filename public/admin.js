@@ -60,13 +60,17 @@ function historyHtml(h) {
     </li>`;
 }
 
-// Sin banco de partidas: lo agotó (le quedan 0) o se pasó (lleva más de las habilitadas).
+// Sin banco de partidas: lo agotó (le quedan 0), adelantó partidas (hasta 2, permitido) o lo
+// sancionaron por adelantar de más (−8 partidas cada vez).
 function bankHtml(b) {
-  const over = -b.left;
+  const penalties = b.penalties?.length || 0;
+  const label = penalties ? `Sancionado ${penalties === 1 ? "1 vez" : `${penalties} veces`}` : b.left < 0 ? "Adelantó partidas" : "Banco agotado";
+  const tag = penalties ? `Banco ${b.left}` : b.left < 0 ? `${-b.left} adelantadas` : "0 disponibles";
+  const when = penalties ? ` Sanciones: ${b.penalties.map((d) => day(d)).join(", ")}.` : "";
   return `
-    <li class="suspect ${over > 0 ? "alto" : "medio"}">
-      <span class="suspect-who">${over > 0 ? "Se pasó del banco" : "Banco agotado"} <span class="tag ${over > 0 ? "hot" : "warn"}">${over > 0 ? `+${over}` : "0 disponibles"}</span></span>
-      <span class="suspect-why">Lleva <b>${b.played} partidas</b> jugadas en el torneo, con <b>${b.allowed}</b> habilitadas hasta hoy.</span>
+    <li class="suspect ${penalties ? "alto" : "medio"}">
+      <span class="suspect-who">${label} <span class="tag ${penalties ? "hot" : "warn"}">${tag}</span></span>
+      <span class="suspect-why">Lleva <b>${b.played} partidas</b> jugadas en el torneo, con <b>${b.allowed}</b> habilitadas hasta hoy.${when}</span>
     </li>`;
 }
 

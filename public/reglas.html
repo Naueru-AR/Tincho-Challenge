@@ -54,8 +54,9 @@
   <main class="wrap" id="reglas">
     <!-- Las reglas se editan acá, a mano. Cada <li> es una regla:
          class="no" = prohibido (rojo), class="ok" = permitido (verde), sin clase = informativa.
-         Las partidas por día (class="rule-limit") y los días de cupo liberado (class="rule-free")
-         se completan solos desde participants.json. -->
+         Las partidas por día (class="rule-limit"), los días de cupo liberado (class="rule-free"),
+         el adelanto (class="rule-advance") y la sanción (class="rule-penalty") se completan solos
+         desde participants.json. -->
     <section class="block rules">
       <div class="rule-group">
         <h2>El formato</h2>
@@ -67,6 +68,15 @@
           <li>
             <h3>Banco de partidas: <span class="rule-limit">8</span> por día, acumulables</h3>
             <p>Cada día se suman <span class="rule-limit">8</span> partidas de SoloQ a tu banco, y las que no jugás se guardan para los días siguientes. Por ejemplo: si hoy jugás 4, mañana tenés 12 disponibles. El día va de 00:00 a 23:59, hora de Argentina, y las remakes no descuentan.</p>
+          </li>
+          <li>
+            <h3>Adelanto de hasta <span class="rule-advance">2</span> partidas</h3>
+            <p>Si te quedaste sin banco, podés adelantar hasta <span class="rule-advance">2</span> partidas, que se descuentan de los días siguientes. Por ejemplo: si tenés 8 y jugás 10, mañana arrancás con 6.</p>
+          </li>
+          <li class="no">
+            <span class="tag hot">Sanción</span>
+            <h3>Pasarse del adelanto: −<span class="rule-penalty">8</span> partidas</h3>
+            <p>Si adelantás más de <span class="rule-advance">2</span> partidas, se te descuentan <span class="rule-penalty">8</span> partidas del banco, lo mismo que un día del torneo. Cada día que vuelvas a pasarte suma otra sanción.</p>
           </li>
           <li class="ok">
             <span class="tag ok">Cupo liberado</span>
