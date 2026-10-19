@@ -179,24 +179,29 @@ function renderSummary(today, sum) {
       </div>`;
   }
   // `bank` es lo que tenía disponible al empezar el día; `left`, lo que le queda ahora (ya con
-  // la sanción, si la hubo). Se pueden adelantar hasta `advance` partidas (banco negativo);
-  // pasarse de eso es una sanción de `penalty` partidas.
+  // la penalización, si la hubo). Se pueden adelantar hasta `advance` partidas; pasarse de eso
+  // es una penalización de `penalty` partidas, que se restan de las del mes. Mientras la está
+  // cumpliendo (lo que debe es más que el adelanto), el banco se muestra en 0.
   const { played, bank, left, advance = 2, penalty = 8 } = today;
   const banned = today.penalized || left < -advance;
-  const flag = today.penalized ? `<span class="today-flag over">Sanción: −${penalty} partidas</span>`
-    : left < -advance ? `<span class="today-flag over">Sancionado: banco en ${signed(left)}</span>`
+  const flag = banned ? `<span class="today-flag over">Penalización de ${penalty} partidas</span>`
     : left < 0 ? `<span class="today-flag ahead">Adelantó ${-left} de ${advance}</span>`
     : left === 0 ? `<span class="today-flag full">Banco agotado</span>`
     : `<span class="today-flag">${left === 1 ? "Le queda 1" : `Le quedan ${left}`}</span>`;
-  const warn = banned ? `
-      <p class="today-warn">⚠ Superó el adelanto de ${advance} partidas: sanción de ${penalty} partidas (un día del torneo), que se descuenta de su banco.${left < 0 ? ` Banco actual: ${signed(left)}.` : ""}</p>` : "";
+  // Día en que vuelve a tener partidas: cada día suma `limit` a lo que debe.
+  const p = Object.fromEntries(new Intl.DateTimeFormat("es-AR", { weekday: "long", day: "numeric", month: "numeric", timeZone: "America/Argentina/Buenos_Aires" })
+    .formatToParts(new Date(Date.now() + (Math.floor(-left / today.limit) + 1) * 864e5)).map((x) => [x.type, x.value]));
+  const back = `${p.weekday} ${p.day}/${p.month}`;
+  const warn = !banned ? "" : today.penalized ? `
+      <p class="today-warn">⚠ Superó el adelanto de ${advance} partidas: penalización de ${penalty} partidas, que se restan de sus partidas del torneo. El banco queda en 0 hasta cumplirla: vuelve a tener partidas el ${back}.</p>` : `
+      <p class="today-warn">⚠ Cumpliendo una penalización de ${penalty} partidas: el banco queda en 0 y vuelve a tener partidas el ${back}.</p>`;
   const used = bank > 0 ? Math.min(100, Math.round((played / bank) * 100)) : played ? 100 : 0;
   return `
     <div class="today${banned ? " over" : left < 0 ? " ahead" : ""}">
       <div class="today-row">
         <span class="today-title">Hoy</span>
         ${games(played)}
-        <span class="today-count" title="Cada día suma ${today.limit} partidas; las que no se usan se acumulan. Se pueden adelantar hasta ${advance}.">Banco <b>${bank}</b></span>
+        <span class="today-count" title="Cada día suma ${today.limit} partidas; las que no se usan se acumulan. Se pueden adelantar hasta ${advance}.">Banco <b>${banned ? 0 : Math.max(bank, 0)}</b></span>
         ${flag}
         ${sum ? `<span class="today-sum">${sum}</span>` : ""}
       </div>
