@@ -224,6 +224,10 @@ Antes de un cambio grande se guarda una copia de lo que está publicado como
   y el texto del inicio.
 - `backup-produccion-2026-10-09-g`: con el panel de "jugadores sin banco" y el texto
   nuevo del inicio, antes de pasar a Edición II y sumar la regla de la prenda.
+- `backup-produccion-2026-10-21`: el torneo en curso con Pickems, banco con adelanto y
+  penalización, Kick, total en la columna Winrate y los datos de cada partida (carril,
+  P/Kill, CS, elo promedio, MVP/ACE y rachas), antes de completar el carril de las
+  partidas del día y de abrir cada partida en League of Graphs.
 
 Para ver los backups y volver a uno:
 
@@ -442,11 +446,17 @@ Cada partida del historial muestra, además del campeón, el KDA y los LP:
   la visión: la primera vez que aparecen en el historial se vuelven a pedir a Riot
   (una sola vez).
 
+**Al tocar una partida** se abre esa misma partida en **League of Graphs**
+(`leagueofgraphs.com/match/las/<id>`), con el detalle de los 10 jugadores. No se usa
+OP.GG porque sus links a cada partida llevan un código interno que no se puede armar
+con los datos de Riot.
+
 El carril y el rango promedio cuestan consultas a Riot (1 por el timeline y hasta 9 por
 los rangos), así que no se calculan al abrir el historial sino en segundo plano, con el
-cron: una partida nueva por pasada, y se guardan dentro de `watch:<puuid>` (sin
-escrituras extra de KV). Aparecen unos minutos después de que termina la partida; las
-partidas anteriores a este cambio no los tienen. Los rangos de los participantes del
+cron: una o dos partidas por pasada, de la más nueva a la más vieja, y se guardan
+dentro de `watch:<puuid>` (sin escrituras extra de KV). Aparecen unos minutos después
+de que termina la partida. Además, una vez por día el cron revisa las partidas de hoy
+que todavía no los tienen y las completa. Los rangos de los participantes del
 torneo ya se conocen y no se vuelven a pedir; los demás se reusan por 6 horas.
 
 Cómo se cuenta:

@@ -336,6 +336,10 @@ a.avatar:hover, a.avatar:focus-visible {
   border: 1px solid color-mix(in srgb, var(--res-c) 30%, transparent);
   background: linear-gradient(90deg, color-mix(in srgb, var(--res-c) 14%, transparent), transparent 60%);
 }
+.game { position: relative; }
+.game-link { position: absolute; inset: 0; border-radius: inherit; z-index: 1; }
+.game:has(.game-link:hover) { border-color: var(--res-c); filter: brightness(1.12); }
+.game-link:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 .game.win { --res-c: var(--win); }
 .game.loss { --res-c: var(--loss); }
 .game.remake { --res-c: var(--dim); }

@@ -50,8 +50,8 @@ async function loadRows(cfg, context, env) {
   const roster = new Map(cfg.players.map((p) => [p.riotId.toLowerCase(), p.alias || p.riotId.split("#")[0]]));
   const budget = { left: 12 };
   // Consultas para los datos extra del historial (carril y rango promedio): alcanzan para una
-  // partida por pasada. Los rangos de los participantes ya se conocen y no se vuelven a pedir.
-  const extras = { left: 11, known: new Map(rows.filter((r) => r.puuid).map((r) => [r.puuid, r.entry])) };
+  // o dos partidas por pasada (lo que no entre en el tope del pedido queda para la próxima). Los rangos de los participantes ya se conocen y no se vuelven a pedir.
+  const extras = { left: 20, known: new Map(rows.filter((r) => r.puuid).map((r) => [r.puuid, r.entry])) };
   context.waitUntil(
     (async () => {
       const log = (what) => (err) => { if (err.status !== "budget") console.log(what, err.message); };

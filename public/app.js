@@ -212,6 +212,13 @@ function renderSummary(today, sum) {
 // Datos de rendimiento de una partida, como en OP.GG: carril contra su rival al minuto 15,
 // participación en kills, CS (y por minuto) y rango promedio de la partida. El carril y el
 // rango promedio los calcula el sitio en segundo plano: aparecen unos minutos después.
+// Link a la partida exacta en League of Graphs (OP.GG no tiene links armables por ID).
+const LOG_REGION = { LA2: "las", LA1: "lan", BR1: "br", NA1: "na", EUW1: "euw", EUN1: "eune", KR: "kr" };
+const matchUrl = (id) => {
+  const [platform, game] = id.split("_");
+  return `https://www.leagueofgraphs.com/match/${LOG_REGION[platform] || platform.toLowerCase()}/${game}`;
+};
+
 // Mejor racha de kills de la partida, como etiqueta al lado del campeón.
 const MULTI = { 2: "Doble kill", 3: "Triple kill", 4: "Cuádruple kill", 5: "Pentakill" };
 const multiHtml = (m) => (MULTI[m.multi] && !m.remake ? `<span class="g-multi m${m.multi}">${MULTI[m.multi]}</span>` : "");
@@ -253,6 +260,7 @@ function renderGames({ matches, today }) {
     <ul class="games" aria-label="Partidas de hoy">
       ${matches.map((m) => `
         <li class="game ${m.remake ? "remake" : m.win ? "win" : "loss"}">
+          <a class="game-link" href="${matchUrl(m.id)}" target="_blank" rel="noopener" title="Ver la partida en League of Graphs" aria-label="Ver la partida de ${esc(m.champion)} en League of Graphs"></a>
           <img src="${img(m.champion)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
           <span><span class="g-champ">${esc(m.champion)}</span>
             <span class="g-meta">${POS_ES[m.position] || "—"}, ${mmss(m.duration)}, ${ago(m.endedAt)}</span></span>
