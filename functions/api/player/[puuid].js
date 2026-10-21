@@ -2,7 +2,7 @@
 // Partidas de SoloQ que el jugador jugó HOY y cuántas le quedan en su banco de partidas
 // (cada día suma `dailyLimit` y las que no usa se acumulan; ver lib/duo.js).
 // El historial se reinicia cada medianoche: no se muestran partidas de días anteriores.
-import { loadConfig, getMatchIds, getMatch, isRemake, tzOffset, cachedResponse, withBudget, json, isDemo } from "../../../lib/riot.js";
+import { loadConfig, getMatchIds, getMatch, isRemake, mvpAce, tzOffset, cachedResponse, withBudget, json, isDemo } from "../../../lib/riot.js";
 import { demoMatches, demoBank } from "../../../lib/demo.js";
 import { bankRules, dayKey, isFreeDay, ledger, loadState } from "../../../lib/duo.js";
 import { getLpChanges } from "../../../lib/lp.js";
@@ -52,13 +52,15 @@ async function today(puuid, cfg, rules, dayStart, env) {
       getLpChanges(puuid, env),
       loadState(puuid, env), // lo jugado en días anteriores, para el banco
     ]);
-    const loaded = await Promise.all(ids.map((id) => getMatch(id, cfg, env)));
+    const loaded = await Promise.all(ids.map((id) => getMatch(id, cfg, env, true)));
     // Cada partida es del día en que EMPEZÓ, igual que en el banco (lib/duo.js). Riot también
     // devuelve las que empezaron antes de medianoche y terminaron después: esas son de ayer
     // y ya están contadas ahí, así que no se muestran ni se cuentan hoy.
     const started = (m) => m.info.gameStartTimestamp ?? m.info.gameCreation;
     const matches = loaded.filter((m) => m && started(m) >= dayStart).map((m) => {
       const me = m.info.participants.find((p) => p.puuid === puuid);
+      const teamKills = m.info.participants.filter((p) => p.teamId === me.teamId).reduce((n, p) => n + p.kills, 0);
+      const extra = state.extra?.[m.metadata.matchId]; // carril y rango promedio (lib/details.js)
       return {
         id: m.metadata.matchId,
         lpChange: lpChanges[m.metadata.matchId] ?? null, // null = no lo tenemos registrado
@@ -70,6 +72,11 @@ async function today(puuid, cfg, rules, dayStart, env) {
         deaths: me.deaths,
         assists: me.assists,
         cs: me.totalMinionsKilled + me.neutralMinionsKilled,
+        multi: me.largestMultiKill ?? 0, // mejor racha: 2 doble, 3 triple, 4 cuádruple, 5 penta
+        badge: (() => { const b = mvpAce(m); return b?.mvp === puuid ? "MVP" : b?.ace === puuid ? "ACE" : null; })(),
+        kp: teamKills ? Math.round(((me.kills + me.assists) / teamKills) * 100) : 0, // participación en kills
+        lane: extra?.lane ?? null, // su parte (0–100) contra el rival de su carril al minuto 15
+        avg: extra?.avg ?? null, // rango promedio de la partida
         duration: m.info.gameDuration,
         endedAt: m.info.gameEndTimestamp,
       };

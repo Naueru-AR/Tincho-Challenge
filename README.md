@@ -419,6 +419,36 @@ de resumen de todo el ancho y, debajo, la lista de las partidas de hoy:
 - **A la derecha**: ganadas, perdidas, remakes y LP sumados de esas mismas
   partidas de hoy.
 
+Cada partida del historial muestra, además del campeón, el KDA y los LP:
+
+- **Carril** (como OP.GG): su parte del oro, la experiencia y el CS contra el rival
+  de su mismo carril al **minuto 15**. Se ve como "62 : 38": a la izquierda el
+  jugador y a la derecha su rival, en verde si ganó la fase de líneas y en rojo si
+  la perdió (50 : 50 queda sin color). Sale del timeline de la partida.
+- **P/Kill**: participación en kills, (kills + asistencias) / kills de su equipo.
+- **CS** y, entre paréntesis, CS por minuto.
+- **Elo promedio**, entre paréntesis ("Elo prom. (Esmeralda I)"), de los 10 jugadores de la partida (su rango de SoloQ al momento
+  de calcularlo; los que no tienen rango no cuentan).
+- Debajo del KDA, el KDA en número: (kills + asistencias) / muertes.
+- Debajo del KDA, las etiquetas:
+  - **MVP** (amarillo): fue el mejor jugador del equipo que ganó. **ACE**: el mejor
+    del equipo que perdió. Se elige con un puntaje que compara a los 10 jugadores en
+    KDA (30 %), participación en kills (20 %), daño a campeones (25 %), oro (15 %) y
+    visión (10 %), cada uno relativo al mejor de la partida (`mvpAce` en
+    `lib/riot.js`). Es parecido a OP.GG, pero no idéntico: su fórmula no es pública.
+  - Su **mejor racha de kills**: "Doble kill", "Triple kill", "Cuádruple kill" o
+    "Pentakill" (dorada).
+- Las partidas guardadas antes de estos cambios no traían la racha, el daño, el oro ni
+  la visión: la primera vez que aparecen en el historial se vuelven a pedir a Riot
+  (una sola vez).
+
+El carril y el rango promedio cuestan consultas a Riot (1 por el timeline y hasta 9 por
+los rangos), así que no se calculan al abrir el historial sino en segundo plano, con el
+cron: una partida nueva por pasada, y se guardan dentro de `watch:<puuid>` (sin
+escrituras extra de KV). Aparecen unos minutos después de que termina la partida; las
+partidas anteriores a este cambio no los tienen. Los rangos de los participantes del
+torneo ya se conocen y no se vuelven a pedir; los demás se reusan por 6 horas.
+
 Cómo se cuenta:
 
 - El día va de 00:00 a 23:59 en la zona horaria del torneo, que se toma de la

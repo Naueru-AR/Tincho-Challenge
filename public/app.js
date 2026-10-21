@@ -209,6 +209,30 @@ function renderSummary(today, sum) {
     </div>`;
 }
 
+// Datos de rendimiento de una partida, como en OP.GG: carril contra su rival al minuto 15,
+// participación en kills, CS (y por minuto) y rango promedio de la partida. El carril y el
+// rango promedio los calcula el sitio en segundo plano: aparecen unos minutos después.
+// Mejor racha de kills de la partida, como etiqueta al lado del campeón.
+const MULTI = { 2: "Doble kill", 3: "Triple kill", 4: "Cuádruple kill", 5: "Pentakill" };
+const multiHtml = (m) => (MULTI[m.multi] && !m.remake ? `<span class="g-multi m${m.multi}">${MULTI[m.multi]}</span>` : "");
+// MVP (mejor jugador del equipo ganador) o ACE (mejor del perdedor), debajo del KDA.
+const badgeHtml = (m) => (m.badge && !m.remake ? `<span class="g-badge ${m.badge.toLowerCase()}" title="${m.badge === "MVP" ? "Mejor jugador del equipo ganador" : "Mejor jugador del equipo perdedor"}">${m.badge}</span>` : "");
+
+function statsHtml(m) {
+  if (m.remake) return `<span class="g-stats"></span>`;
+  const lane = typeof m.lane === "number"
+    ? `<span class="g-lane ${m.lane > 50 ? "up" : m.lane < 50 ? "down" : ""}" title="Oro, experiencia y CS al minuto 15: ${m.lane} él, ${100 - m.lane} su rival de carril">Carril <b>${m.lane} : ${100 - m.lane}</b></span>` : "";
+  const perMin = m.duration ? (m.cs / (m.duration / 60)).toFixed(1).replace(".", ",") : "0";
+  const avg = m.avg ? `<span class="g-avg" style="--tier-c:${tierColor(m.avg.tier)}" title="Rango promedio de los 10 jugadores de la partida">Elo prom. (${TIER_ES[m.avg.tier]}${m.avg.rank ? " " + m.avg.rank : ""})</span>` : "";
+  return `
+    <span class="g-stats">
+      ${lane}
+      ${typeof m.kp === "number" ? `<span title="Participación en kills">P/Kill <b>${m.kp}%</b></span>` : ""}
+      <span>CS <b>${m.cs}</b> (${perMin})</span>
+      ${avg}
+    </span>`;
+}
+
 function renderGames({ matches, today }) {
   if (!matches.length) return `${renderSummary(today, "")}<p class="history-msg">Hoy todavía no jugó partidas de SoloQ.</p>`;
   const played = matches.filter((m) => !m.remake); // las remakes no suman ni restan
@@ -232,7 +256,8 @@ function renderGames({ matches, today }) {
           <img src="${img(m.champion)}" alt="" loading="lazy" onerror="this.style.visibility='hidden'">
           <span><span class="g-champ">${esc(m.champion)}</span>
             <span class="g-meta">${POS_ES[m.position] || "—"}, ${mmss(m.duration)}, ${ago(m.endedAt)}</span></span>
-          <span class="g-kda">${m.kills}/${m.deaths}/${m.assists}<small>${m.cs} CS</small></span>
+          ${statsHtml(m)}
+          <span class="g-kda">${m.kills}/${m.deaths}/${m.assists}<small>${((m.kills + m.assists) / Math.max(1, m.deaths)).toFixed(2).replace(".", ",")} KDA</small>${badgeHtml(m) || multiHtml(m) ? `<span class="g-tags">${badgeHtml(m)}${multiHtml(m)}</span>` : ""}</span>
           ${res(m)}
         </li>`).join("")}
     </ul>`;

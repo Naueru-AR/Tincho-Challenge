@@ -331,7 +331,7 @@ a.avatar:hover, a.avatar:focus-visible {
 .board > .history-msg { padding: 1.2rem; }
 .games { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .game {
-  display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) auto auto; gap: .9rem; align-items: center;
+  display: grid; grid-template-columns: 2.6rem minmax(0, 1fr) auto auto auto; gap: .9rem; align-items: center;
   padding: .55rem .8rem .55rem .6rem; border-radius: 10px;
   border: 1px solid color-mix(in srgb, var(--res-c) 30%, transparent);
   background: linear-gradient(90deg, color-mix(in srgb, var(--res-c) 14%, transparent), transparent 60%);
@@ -343,8 +343,20 @@ a.avatar:hover, a.avatar:focus-visible {
 .game.remake .g-champ, .game.remake .g-kda, .game.remake img { opacity: .55; }
 .game img { width: 2.6rem; height: 2.6rem; border-radius: 8px; display: block; background: var(--panel-2); }
 .g-champ { font: 700 1.05rem var(--display); }
+.g-stats { display: grid; gap: .1rem; width: 9.5rem; font-size: .78rem; line-height: 1.25; color: var(--dim); font-variant-numeric: tabular-nums; }
+.g-stats b { color: var(--muted); font-weight: 700; }
+.g-lane.up b { color: var(--win); }
+.g-lane.down b { color: var(--loss); }
+.g-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .25rem; margin-top: .3rem; }
+.g-badge { padding: .12rem .45rem; border-radius: 6px; font: 800 .68rem/1.2 var(--display); letter-spacing: .08em; }
+.g-badge.mvp { color: #1A1305; background: #F5C518; box-shadow: 0 0 10px -2px #F5C518; }
+.g-badge.ace { color: #fff; background: #7B6CD9; }
+.g-multi { display: inline-block; padding: .12rem .45rem; border-radius: 999px; font: 700 .68rem/1.2 var(--display); letter-spacing: .06em; text-transform: uppercase; vertical-align: .12em; color: #fff; background: color-mix(in srgb, var(--loss) 75%, transparent); }
+.g-multi.m4 { background: #C24BD6; }
+.g-multi.m5 { color: #1A1305; background: linear-gradient(180deg, var(--gold-1), var(--gold-2)); }
+.g-avg { font: 700 .8rem var(--display); letter-spacing: .03em; color: var(--tier-c); }
 .g-meta { display: block; color: var(--dim); font-size: .82rem; }
-.g-kda { font: 800 1.15rem/1 var(--display); text-align: right; font-variant-numeric: tabular-nums; }
+.g-kda { width: 8.5rem; font: 800 1.15rem/1 var(--display); text-align: right; font-variant-numeric: tabular-nums; }
 .g-kda small { display: block; font: 500 .78rem var(--text); color: var(--dim); margin-top: .2rem; }
 .g-res { font: 800 .85rem var(--display); letter-spacing: .08em; color: var(--res-c); min-width: 3.4rem; text-align: center; }
 .g-res.has-lp { display: flex; flex-direction: column; align-items: center; line-height: 1; letter-spacing: 0; }
@@ -379,7 +391,9 @@ a.avatar:hover, a.avatar:focus-visible {
   .wr-wl { font-size: .85rem; }
   .history { padding: 0 .8rem 1rem; }
   .today-sum { margin-left: 0; flex-basis: 100%; }
-  .game { gap: .7rem; }
+  .game { gap: .3rem .7rem; grid-template-columns: 2.6rem minmax(0, 1fr) auto auto; }
+  .g-stats { grid-column: 2 / -1; grid-row: 2; display: flex; flex-wrap: wrap; gap: .1rem .8rem; width: auto; }
+  .g-kda { width: auto; }
   .g-res { min-width: 2.8rem; }
   .marker-name { font-size: .8rem; padding: .2rem .4rem; }
   .band-labels span { font-size: .72rem; }

@@ -49,6 +49,9 @@ async function loadRows(cfg, context, env) {
   // acaban las consultas de esta pasada, lo que falte se hace en la siguiente.
   const roster = new Map(cfg.players.map((p) => [p.riotId.toLowerCase(), p.alias || p.riotId.split("#")[0]]));
   const budget = { left: 12 };
+  // Consultas para los datos extra del historial (carril y rango promedio): alcanzan para una
+  // partida por pasada. Los rangos de los participantes ya se conocen y no se vuelven a pedir.
+  const extras = { left: 11, known: new Map(rows.filter((r) => r.puuid).map((r) => [r.puuid, r.entry])) };
   context.waitUntil(
     (async () => {
       const log = (what) => (err) => { if (err.status !== "budget") console.log(what, err.message); };
@@ -57,7 +60,7 @@ async function loadRows(cfg, context, env) {
         if (!r.puuid) continue;
         if (r.entry) await trackLp(r.puuid, r.entry, rankScore(r.entry), cfg, env).catch(log("trackLp:"));
         // Cuando empieza el recuento de los Pickems ya no hace falta revisar dúos ni banco.
-        if (Date.now() < calcReadyAt(cfg)) await watchPlayer(r.puuid, r.entry, cfg, env, roster, budget).catch(log("watchPlayer:"));
+        if (Date.now() < calcReadyAt(cfg)) await watchPlayer(r.puuid, r.entry, cfg, env, roster, budget, extras).catch(log("watchPlayer:"));
       }
       // Después del final: un paso del recuento de partidas para los Pickems.
       await calcStep(cfg, env, rows).catch(log("calcStep:"));
