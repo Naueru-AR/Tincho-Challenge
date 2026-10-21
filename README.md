@@ -31,7 +31,7 @@ public/               ← el sitio (HTML, CSS, JS) + participants.json
   reglas.html, reglas.js  reglas del torneo
   pickems.html, pickems.js  Pickems: predicciones antes del torneo
   admin.html, admin.js  panel privado del organizador
-  shared.js           lo que comparten las dos páginas
+  shared.js           lo que comparten las páginas (escudo, íconos, podios, Kick)
 functions/api/        ← endpoints que corren en Cloudflare (esconden la API key)
   leaderboard.js      GET /api/leaderboard
   player/[puuid].js   GET /api/player/:puuid
@@ -62,12 +62,24 @@ Editá `public/participants.json`:
   "platform": "la2",        // LAS. LAN = la1, BR = br1, NA = na1, EUW = euw1
   "region": "americas",     // europe para EUW, asia para KR
   "opggRegion": "las",
+  "dailyLimit": 8,          // partidas que suma el banco por día
+  "freeLastDays": 3,        // últimos días con el cupo liberado
+  "advance": 2,             // partidas que se pueden adelantar (opcional, 2 por defecto)
+  "penalty": 8,             // penalización por pasarse del adelanto (opcional, = dailyLimit)
+  "duo": { "streak": 2, "highStreak": 3, "perDay": 4, "neverAgainst": 5 },
+  "highEloFrom": { "tier": "DIAMOND", "rank": "III" },   // corte High / Low Elo
+  "pickems": { "closes": "2026-10-17T18:00:00-03:00" }, // cierre de la votación
   "players": [
     { "riotId": "NombreEnJuego#TAG" },
+    { "riotId": "TDG Kairo#TDG", "kick": "nkairoo" },
     { "riotId": "Otro#LAS", "alias": "Nacho", "baseline": { "wins": 12, "losses": 9 } }
   ]
 }
 ```
+
+Cada opción está explicada en su sección: "Banco de partidas" (`dailyLimit`,
+`freeLastDays`, `advance`, `penalty`), "Panel del organizador" (`duo`), "Top 3 y
+podio final" (`highEloFrom`), "Pickems" (`pickems`) y "Canal de Kick" (`kick`).
 
 - De cada jugador alcanza con el `riotId`, que es el `Nombre#TAG` real. En la tabla se
   muestra **el mismo nick, sin el `#TAG`** ("TDG Kairo#TDG" se ve como "TDG Kairo").
@@ -242,6 +254,8 @@ primeros de High Elo y los tres primeros de Low Elo, con las mismas tarjetas que
 Top 3 del inicio (ícono de la cuenta, corona y medallas). Se habilita sola cuando termina el torneo (fecha `end`): recién ahí aparece
 el botón "Ver el podio final" en el encabezado. Antes de esa fecha la página solo
 avisa cuándo se habilita. Para verla antes y probarla, abrí `/podio?preview`.
+Al final de esa página va también el **podio de Pickems** (los tres que más puntos
+sacaron), que aparece cuando termina el recuento (ver "Pickems").
 
 ### Ícono de la cuenta
 
@@ -290,13 +304,14 @@ winrate:
 La barra superior tiene el escudo (lleva al inicio) y cuatro opciones:
 
 - **Ranking**: baja directo a la tabla de posiciones.
-- **Podio**: abre `podio.html` (el podio final por categoría).
+- **Podio**: abre `podio.html` (el podio final por categoría y el de Pickems).
 - **Pickems**: abre `pickems.html` (ver "Pickems").
 - **Reglas**: abre `reglas.html`.
 
-Las partidas por día y los días de cupo liberado que muestran las reglas salen de
-`dailyLimit` y `freeLastDays`, así que al cambiarlos en `participants.json` se
-actualizan solos en las reglas, en el historial y en el panel.
+Las partidas por día, los días de cupo liberado, el adelanto y la penalización que
+muestran las reglas salen de `dailyLimit`, `freeLastDays`, `advance` y `penalty`, así
+que al cambiarlos en `participants.json` se actualizan solos en las reglas, en el
+historial y en el panel.
 
 Las reglas están escritas a mano en `public/reglas.html`, agrupadas por tema. Cada
 regla es un `<li>` con un título y un texto; para cambiarlas o sumar una se edita
@@ -306,8 +321,8 @@ ese archivo:
 - `<li class="ok">` con la etiqueta "Permitido": sale en verde.
 - `<li>` sin clase: informativa, en dorado.
 
-Los bloques actuales son: el formato (se juega solo, banco de partidas y cupo
-liberado), lo prohibido, las partidas previas a SoloQ, qué pasa si te cruzás con
+Los bloques actuales son: el formato (se juega solo, banco de partidas, adelanto de
+hasta 2 partidas, penalización por pasarse y cupo liberado), lo prohibido, las partidas previas a SoloQ, qué pasa si te cruzás con
 otro participante, el castigo para el último puesto al terminar, y el espíritu del
 torneo.
 
@@ -386,18 +401,21 @@ Las partidas por día y los días de cupo liberado también están en
 ```
 
 La cuenta es: **banco de hoy = 8 × días de torneo transcurridos − partidas jugadas
-antes de hoy**. El primer día hay 8; un día sin jugar deja 16 para el siguiente.
-Si un jugador se queda sin banco, aparece en el panel del organizador.
+antes de hoy − penalizaciones** (ver "Adelanto y penalización" más arriba). El primer
+día hay 8; un día sin jugar deja 16 para el siguiente. Si un jugador se queda sin
+banco, adelanta partidas o lo penalizan, aparece en el panel del organizador.
 
 El historial de cada jugador es **solo del día de hoy**: se reinicia a la
 medianoche y no muestra partidas de días anteriores. Al abrirlo aparece una franja
 de resumen de todo el ancho y, debajo, la lista de las partidas de hoy:
 
 - **A la izquierda**: cuántas partidas jugó hoy, cuánto tenía en el banco al
-  empezar el día y cuántas le quedan. Si lo agotó dice "Banco agotado"; si se
-  pasó, la franja se pone en rojo con el cartel "Banco superado por N". La barra
-  muestra qué parte del banco usó. En los últimos días del torneo, en lugar del
-  banco dice "Cupo liberado".
+  empezar el día y cuántas le quedan. Si lo agotó dice "Banco agotado". Si adelantó
+  partidas (hasta 2), la franja se pone dorada con "Adelantó N de 2". Si se pasó del
+  adelanto, o está cumpliendo una penalización, se pone en rojo: el banco figura en
+  0, con el cartel "Penalización de 8 partidas" y un aviso con el día en que vuelve
+  a tener partidas. La barra muestra qué parte del banco usó. En los últimos días
+  del torneo, en lugar del banco dice "Cupo liberado".
 - **A la derecha**: ganadas, perdidas, remakes y LP sumados de esas mismas
   partidas de hoy.
 
@@ -687,7 +705,7 @@ Hay tres topes que condicionan cómo está hecho el sitio:
 |---|---|---|
 | Cloudflare: consultas por pedido | 50, contando cada `fetch` a Riot **y cada lectura o escritura de la Cache API** | Cada pedido tiene un tope propio de 42 consultas a Riot; la Cache API se usa unas pocas veces por pedido y lo demás va a KV, que tiene un tope aparte de 1.000 |
 | Riot (key personal) | 20 consultas por segundo y 100 cada 2 minutos | Todas las consultas pasan por un regulador de 15 por segundo; la tabla se recalcula como mucho cada 2 minutos |
-| Cloudflare KV | 100.000 lecturas y 1.000 escrituras por día | Solo se guarda lo que dura: cuentas, íconos, partidas terminadas, los LP y la revisión del panel |
+| Cloudflare KV | 100.000 lecturas y 1.000 escrituras por día | Solo se guarda lo que dura: cuentas, íconos, partidas terminadas, los LP, la revisión del panel y los Pickems |
 
 Qué se guarda y cuánto dura:
 
@@ -697,6 +715,11 @@ Qué se guarda y cuánto dura:
 - **Partidas terminadas**: 30 días (KV), achicadas a los campos que usa el sitio.
 - **Rango y LP actuales**: no se guardan por separado; se piden a Riot en cada
   recálculo de la tabla (1 consulta por jugador).
+- **Pickems**: cada voto (una escritura por persona), los resultados que carga el
+  organizador, la tabla final y el avance del recuento (unas 30 escrituras en total,
+  después del final). Votar no le consulta nada a Riot.
+- **Jugadores sin rango**: como no hay total de victorias y derrotas que comparar,
+  se revisa su historial cada 10 minutos (1 consulta a Riot cada vez).
 
 Los vencimientos llevan un margen al azar (hasta 25 % más), para que no venza todo
 junto en la misma pasada.
