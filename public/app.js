@@ -122,7 +122,7 @@ function renderBoard(players) {
         <span class="wr">
           <span class="wr-top">
             <b class="wr-val ${wr === null ? "" : wr >= 50 ? "up" : "down"}">${wr === null ? "–" : wr + "%"}</b>
-            <span class="wr-wl"><span class="w">${p.wins}V</span> · <span class="l">${p.losses}D</span></span>
+            <span class="wr-wl"><span class="w">${p.wins}V</span> · <span class="l">${p.losses}D</span> · <span class="t" title="Partidas totales">${games}</span></span>
           </span>
           <span class="wr-bar" aria-hidden="true">${games ? `<i class="w" style="flex:${p.wins}"></i><i class="l" style="flex:${p.losses}"></i>` : ""}</span>
         </span>

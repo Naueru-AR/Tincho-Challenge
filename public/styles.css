@@ -293,6 +293,7 @@ a.avatar:hover, a.avatar:focus-visible {
 .wr-wl { font: 700 .95rem/1 var(--display); letter-spacing: .03em; color: var(--dim); font-variant-numeric: tabular-nums; }
 .wr-wl .w { color: var(--win); }
 .wr-wl .l { color: var(--loss); }
+.wr-wl .t { color: var(--ink); }
 .wr-bar { display: flex; gap: 3px; height: 5px; padding: 0 2px; }
 .wr-bar i { min-width: 3px; transform: skewX(-30deg); }
 .wr-bar .w { background: var(--win); }
