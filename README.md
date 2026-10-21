@@ -299,7 +299,7 @@ winrate:
 - **Rango**: lleva el emblema oficial del rango (Hierro, Bronce… Retador) al lado
   del nombre y los LP. Las imágenes salen de Community Dragon; si alguna no carga,
   queda solo el texto.
-- **Winrate · V / D**: el porcentaje (verde si es 50 % o más, rojo si es menos),
+- **Winrate · V / D / P** (victorias / derrotas / partidas): el porcentaje (verde si es 50 % o más, rojo si es menos),
   las victorias, las derrotas y el total de partidas ("101V · 97D · 198") y, debajo, una barra partida en dos: el
   tramo verde es proporcional a las victorias y el rojo a las derrotas.
 
