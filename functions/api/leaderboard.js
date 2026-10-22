@@ -2,7 +2,7 @@
 // Devuelve a cada participante con su rango de SoloQ y su winrate.
 import { loadConfig, getAccount, getSoloQ, getProfileIcon, rankScore, cachedResponse, recall, remember, withBudget, json, isDemo } from "../../lib/riot.js";
 import { demoLeaderboard, demoPlayers } from "../../lib/demo.js";
-import { trackLp } from "../../lib/lp.js";
+import { trackLp, getAegis } from "../../lib/lp.js";
 import { watchPlayer } from "../../lib/duo.js";
 import { saveFinal, calcStep, calcReadyAt } from "../../lib/pickems.js";
 
@@ -41,6 +41,7 @@ async function loadRows(cfg, context, env) {
   await Promise.all(
     rows.map(async (r) => {
       if (r.puuid) r.profileIconId = await getProfileIcon(r.puuid, cfg, env).catch(() => null);
+      if (r.puuid) r.aegis = await getAegis(r.puuid, env).catch(() => 0); // Égidas de Valor (lib/lp.js)
     })
   );
 
@@ -87,6 +88,7 @@ function body(cfg, rows, demo) {
       riotId: p.riotId,
       opggUrl: `https://op.gg/lol/summoners/${cfg.opggRegion}/${encodeURIComponent(name)}-${encodeURIComponent(tag)}`,
       // Canal de Kick, si lo cargaste con "kick": "<canal>" en participants.json.
+      aegis: r.aegis ?? 0,
       kickUrl: p.kick ? `https://kick.com/${encodeURIComponent(p.kick)}` : null,
       puuid: r.puuid ?? null,
       profileIconId: r.profileIconId ?? null,

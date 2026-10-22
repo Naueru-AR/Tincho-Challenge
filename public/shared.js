@@ -55,6 +55,16 @@ export function avatarHtml(p, extra = "") {
     </a>`;
 }
 
+/* ---------- Égida de Valor ---------- */
+// Ícono oficial de la Égida de Valor (public/aegis.png, achicado del que publica Community
+// Dragon) con la cantidad de Égidas (victorias con el doble de LP, ver lib/lp.js), en la
+// esquina del ícono de la cuenta. Va adentro del avatar: avatarHtml(p, aegisHtml(p)).
+export const aegisHtml = (p) => p.aegis > 0 ? `
+  <span class="aegis" title="Égidas de Valor: ${p.aegis}" aria-label="${p.aegis} Égidas de Valor">
+    <img src="/aegis.png" alt="" width="24" height="20">
+    <b>${p.aegis}</b>
+  </span>` : "";
+
 /* ---------- canal de Kick ---------- */
 // Una K verde chiquita al lado del nombre, para los que transmiten en Kick.
 export const kickHtml = (p) => p.kickUrl ? `

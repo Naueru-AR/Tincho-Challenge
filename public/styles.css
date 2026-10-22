@@ -271,8 +271,11 @@ a.avatar:hover, a.avatar:focus-visible {
 .row:nth-child(3) .pos { color: #D0905F; }
 .row:nth-child(1) > .row-main { box-shadow: inset 3px 0 0 var(--gold); }
 .who { min-width: 0; display: flex; align-items: center; gap: .85rem; }
-.who .avatar { z-index: 1; --av-hover: var(--tier-c, var(--gold)); }
+.who .avatar { z-index: 2; --av-hover: var(--tier-c, var(--gold)); }
 .who-text { min-width: 0; }
+.aegis { position: absolute; right: -.75rem; top: -.6rem; width: max-content; display: flex; align-items: center; gap: .05rem; pointer-events: none; }
+.avatar .aegis img { position: static; inset: auto; border-radius: 0; object-fit: contain; display: block; width: 1.3rem; height: auto; filter: drop-shadow(0 1px 2px rgba(0,0,0,.9)); }
+.aegis b { font: 800 .82rem/1 var(--display); color: var(--gold-1); text-shadow: 0 0 3px #000, 0 0 3px #000, 0 1px 2px #000; }
 .who-name { display: flex; align-items: center; gap: .45rem; min-width: 0; }
 .who-name .alias { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .kick { position: relative; z-index: 1; flex: none; display: block; width: .85rem; height: .85rem; transition: transform .16s, filter .16s; }

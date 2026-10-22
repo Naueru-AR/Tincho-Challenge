@@ -1,4 +1,4 @@
-import { $, esc, tierColor, isApex, TIER_ES, POD_DEFS, podiumHtml, avatarHtml, kickHtml, dd, ddReady, setBrand, tierIcon } from "./shared.js";
+import { $, esc, tierColor, isApex, TIER_ES, POD_DEFS, podiumHtml, avatarHtml, kickHtml, aegisHtml, dd, ddReady, setBrand, tierIcon } from "./shared.js";
 
 const LADDER = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND", "MASTER"];
 const POS_ES = { TOP: "Top", JUNGLE: "Jungla", MIDDLE: "Mid", BOTTOM: "ADC", UTILITY: "Support" };
@@ -111,7 +111,7 @@ function renderBoard(players) {
       <div class="row-main">
         <span class="pos">${i + 1}</span>
         <span class="who">
-          ${avatarHtml(p)}
+          ${avatarHtml(p, aegisHtml(p))}
           <span class="who-text">
             <span class="who-name"><button class="alias toggle" type="button" aria-expanded="false" aria-controls="h-${i}" ${p.puuid ? "" : "disabled"}>${esc(p.alias)}</button>${kickHtml(p)}</span>
             <span class="rid"><a href="${esc(p.opggUrl)}" target="_blank" rel="noopener">${esc(p.riotId)}</a></span>

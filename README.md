@@ -284,6 +284,22 @@ El corte entre las dos categorías (High Elo y Low Elo) se define en `participan
 El orden de la página principal es: encabezado, Top 3, tabla de posiciones y, al
 final, la escalera.
 
+### Égida de Valor
+
+Arriba, en la esquina del ícono de cada jugador, aparece el **ícono oficial de la Égida de
+Valor** (`public/aegis.png`, una copia chica del que publica Community Dragon:
+`valor-aegis-emblem-priority-role-medium.png`) con la cantidad de **Égidas** que lleva (la protección que da Riot por autofill o carril
+prioritario). Si no tiene ninguna, no aparece.
+
+Riot no informa en su API si una partida tuvo Égida, así que se **deduce por los LP**:
+la Égida da el **doble** de LP en una victoria. Como lo que se gana va cambiando a
+medida que el jugador se acerca a su elo, se compara con su **última victoria normal**
+(sin Égida): si la anterior fue +30, cuenta una de +60; si fue +20, una de +40 (desde
+1,8 veces, por si varía 1 o 2 LP). Sin una victoria anterior para comparar, cuenta
+cualquiera de +50 o más. Las derrotas no se tienen en cuenta. Depende de los LP por partida (ver "LP por
+partida"): una partida sin LP registrados no puede contar. El contador se guarda en
+`snap:<puuid>` (`aegis`) y la regla está en `lib/lp.js` (`isAegis`).
+
 ### Canal de Kick
 
 Si un participante transmite en Kick, se le agrega `"kick": "<canal>"` en
