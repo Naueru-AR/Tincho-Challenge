@@ -293,10 +293,14 @@ prioritario). Si no tiene ninguna, no aparece.
 
 Riot no informa en su API si una partida tuvo Égida, así que se **deduce por los LP**:
 la Égida da el **doble** de LP en una victoria. Como lo que se gana va cambiando a
-medida que el jugador se acerca a su elo, se compara con su **última victoria normal**
-(sin Égida): si la anterior fue +30, cuenta una de +60; si fue +20, una de +40 (desde
-1,8 veces, por si varía 1 o 2 LP). Sin una victoria anterior para comparar, cuenta
-cualquiera de +50 o más. Las derrotas no se tienen en cuenta. Depende de los LP por partida (ver "LP por
+medida que el jugador se acerca a su elo, se compara con la **mediana de sus últimas 5
+victorias normales** (sin Égida): si viene ganando +30, cuenta una de +60; si viene
+ganando +20, una de +40 (desde 1,8 veces, por si varía 1 o 2 LP). Se usa la mediana y no
+solo la última victoria porque una victoria rara (por ejemplo +15 por un cambio de
+división) no tiene que mover la referencia: con la última sola, a TDG Lævatæn todas las
++30 siguientes le contaban como Égida (llegó a 17 en lugar de 1). Las derrotas no se
+tienen en cuenta, y las **primeras 5 victorias** registradas de cada jugador tampoco (en
+una cuenta nueva los LP varían mucho), aunque sí sirven de referencia. Depende de los LP por partida (ver "LP por
 partida"): una partida sin LP registrados no puede contar. El contador se guarda en
 `snap:<puuid>` (`aegis`) y la regla está en `lib/lp.js` (`isAegis`).
 
