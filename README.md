@@ -298,9 +298,10 @@ victorias normales** (sin Égida): si viene ganando +30, cuenta una de +60; si v
 ganando +20, una de +40 (desde 1,8 veces, por si varía 1 o 2 LP). Se usa la mediana y no
 solo la última victoria porque una victoria rara (por ejemplo +15 por un cambio de
 división) no tiene que mover la referencia: con la última sola, a TDG Lævatæn todas las
-+30 siguientes le contaban como Égida (llegó a 17 en lugar de 1). Las derrotas no se
-tienen en cuenta, y las **primeras 5 victorias** registradas de cada jugador tampoco (en
-una cuenta nueva los LP varían mucho), aunque sí sirven de referencia. Depende de los LP por partida (ver "LP por
++30 siguientes le contaban como Égida (llegó a 17 en lugar de 1). Para comparar hacen
+falta **al menos 2 victorias normales anteriores**: las primeras victorias registradas de
+cada jugador solo arman la referencia (una Égida en su 1.ª o 2.ª victoria registrada no
+se puede detectar). Las derrotas no se tienen en cuenta. Depende de los LP por partida (ver "LP por
 partida"): una partida sin LP registrados no puede contar. El contador se guarda en
 `snap:<puuid>` (`aegis`) y la regla está en `lib/lp.js` (`isAegis`).
 
